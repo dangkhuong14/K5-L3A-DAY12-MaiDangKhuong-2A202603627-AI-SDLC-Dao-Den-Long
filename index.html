@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>3D Third-Person Low-Poly Scene</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #1a1a2e; }
+    #instructions {
+      position: absolute;
+      top: 15px; left: 15px;
+      color: #fff;
+      font-family: sans-serif;
+      font-size: 14px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px 15px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+  </style>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="instructions">
+    <b>Điều khiển:</b><br>
+    - W / A / S / D: Di chuyển<br>
+    - Space: Nhảy<br>
+    - Giữ chuột & kéo: Xoay camera
+  </div>
+
+  <script>
+    // 1. Khởi tạo Scene, Camera & Renderer
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0f1423);
+    scene.fog = new THREE.FogExp2(0x0f1423, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // 2. Ánh sáng
+    const ambientLight = new THREE.AmbientLight(0xddeeff, 0.5);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff4e6, 0.8);
+    dirLight.position.set(20, 40, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // 3. Đảo tròn Low-poly (Cylinder)
+    const islandGeo = new THREE.CylinderGeometry(15, 12, 4, 16);
+    const islandMat = new THREE.MeshLambertMaterial({ color: 0x3d7042, flatShading: true });
+    const island = new THREE.Mesh(islandGeo, islandMat);
+    island.position.y = -2;
+    island.receiveShadow = true;
+    scene.add(island);
+
+    // Bờ đất/đá dưới đảo
+    const cliffGeo = new THREE.CylinderGeometry(12, 2, 8, 12);
+    const cliffMat = new THREE.MeshLambertMaterial({ color: 0x4a3b32, flatShading: true });
+    const cliff = new THREE.Mesh(cliffGeo, cliffMat);
+    cliff.position.y = -8;
+    island.add(cliff);
+
+    // 4. Nhân vật (Low-poly)
+    const player = new THREE.Group();
+    scene.add(player);
+
+    // Thân
+    const bodyGeo = new THREE.CylinderGeometry(0.3, 0.45, 1.0, 6);
+    const bodyMat = new THREE.MeshLambertMaterial({ color: 0x3b5998, flatShading: true });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = 0.5;
+    body.castShadow = true;
+    player.add(body);
+
+    // Đầu
+    const headGeo = new THREE.SphereGeometry(0.25, 6, 6);
+    const headMat = new THREE.MeshLambertMaterial({ color: 0xffdbac, flatShading: true });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.2;
+    head.castShadow = true;
+    player.add(head);
+
+    // Nón lá (Hình nón chóp)
+    const hatGeo = new THREE.ConeGeometry(0.7, 0.35, 8);
+    const hatMat = new THREE.MeshLambertMaterial({ color: 0xd8be8a, flatShading: true });
+    const hat = new THREE.Mesh(hatGeo, hatMat);
+    hat.position.y = 1.45;
+    hat.castShadow = true;
+    player.add(hat);
+
+    // Đèn lồng nhỏ treo cạnh nón lá
+    const lanternGroup = new THREE.Group();
+    lanternGroup.position.set(0.65, 1.2, 0);
+
+    const lanternGeo = new THREE.SphereGeometry(0.12, 6, 6);
+    const lanternMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
+    const lanternMesh = new THREE.Mesh(lanternGeo, lanternMat);
+    lanternGroup.add(lanternMesh);
+
+    // Ánh sáng phát ra từ đèn lồng
+    const lanternLight = new THREE.PointLight(0xff7a00, 2.0, 5);
+    lanternGroup.add(lanternLight);
+    player.add(lanternGroup);
+
+    // 5. Logic điều khiển và di chuyển (WASD + Nhảy)
+    const keys = {};
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    let velocityY = 0;
+    const gravity = -20;
+    const jumpStrength = 8;
+    const moveSpeed = 6;
+    let isGrounded = true;
+
+    // Góc quay camera
+    let camYaw = 0;
+    let isDragging = false;
+    let prevMouseX = 0;
+
+    window.addEventListener('mousedown', (e) => { isDragging = true; prevMouseX = e.clientX; });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - prevMouseX;
+        camYaw -= deltaX * 0.005;
+        prevMouseX = e.clientX;
+      }
+    });
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+
+      // Hướng di chuyển tương đối theo góc quay camera
+      let moveX = 0;
+      let moveZ = 0;
+
+      if (keys['KeyW']) moveZ -= 1;
+      if (keys['KeyS']) moveZ += 1;
+      if (keys['KeyA']) moveX -= 1;
+      if (keys['KeyD']) moveX += 1;
+
+      const inputLen = Math.hypot(moveX, moveZ);
+      if (inputLen > 0) {
+        moveX /= inputLen;
+        moveZ /= inputLen;
+
+        const rotatedX = moveX * Math.cos(camYaw) - moveZ * Math.sin(camYaw);
+        const rotatedZ = moveX * Math.sin(camYaw) + moveZ * Math.cos(camYaw);
+
+        player.position.x += rotatedX * moveSpeed * dt;
+        player.position.z += rotatedZ * moveSpeed * dt;
+
+        // Quay mặt nhân vật theo hướng di chuyển
+        player.rotation.y = Math.atan2(rotatedX, rotatedZ);
+      }
+
+      // Xử lý nhảy và trọng lực
+      if (keys['Space'] && isGrounded) {
+        velocityY = jumpStrength;
+        isGrounded = false;
+      }
+
+      velocityY += gravity * dt;
+      player.position.y += velocityY * dt;
+
+      if (player.position.y <= 0) {
+        player.position.y = 0;
+        velocityY = 0;
+        isGrounded = true;
+      }
+
+      // Giới hạn nhân vật trên hòn đảo tròn (bán kính 14.5)
+      const distFromCenter = Math.hypot(player.position.x, player.position.z);
+      if (distFromCenter > 14.5) {
+        player.position.x *= (14.5 / distFromCenter);
+        player.position.z *= (14.5 / distFromCenter);
+      }
+
+      // Camera góc nhìn thứ ba theo sau nhân vật
+      const camDist = 6;
+      const camHeight = 3.5;
+      camera.position.x = player.position.x + Math.sin(camYaw) * camDist;
+      camera.position.z = player.position.z + Math.cos(camYaw) * camDist;
+      camera.position.y = player.position.y + camHeight;
+      camera.lookAt(player.position.x, player.position.y + 1, player.position.z);
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Tự co giãn theo màn hình
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
