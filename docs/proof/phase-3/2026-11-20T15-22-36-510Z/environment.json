@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-11-20T15:22:36.512Z",
+  "node": "v24.14.1",
+  "platform": "win32",
+  "arch": "x64",
+  "commit": "c87bf449b24f742669fb9420ce803ad3adafefd1",
+  "working_tree": "M game.contract.json\n M game/src/audio.ts\n M game/src/core.ts\n M game/src/headless.ts\n M game/src/style.css\n M game/src/web.ts\n M game/tests/core.test.ts\n M game/tests/phase2.test.ts\n M package.json\n?? docs/proof/phase-3/\n?? game/tests/phase3.test.ts\n?? phase3.txt\n?? scripts/evidence-phase3.mjs",
+  "note": "Working-tree run. If later tagged, verify the tagged source matches this run."
+}

@@ -1,5 +1,9 @@
 // Phase 1 regression tests, re-based on Ticket-02 standard numbers (speed 6, capacity 10,
-// pickup 1.0 m, interact 2.0 m, 3 flames, +10 per deposited mote, +5 per pulse hit).
+// pickup 1.0 m, interact 2.0 m, 3 flames, +5 per pulse hit).
+// Ticket-03 (contract v1.2) updates, see docs/adr/ADR-003-den-can-dau.md and CHANGELOG.md:
+// - contract v1.1 -> v1.2; night 1 lasts 240 s (was 300 s).
+// - per deposited mote +5 (was +10); a lit lantern now accepts motes as fuel (was "lights only once").
+// - "win as soon as all lanterns are lit" is removed: win only at dawn with >= 3/5 lit.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -8,14 +12,14 @@ import { createGame, idle, step, snapshot, tuning } from '../src/core.ts';
 const empty = { random_motes: false, random_shades: false };
 const close = (a: number, b: number, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
-test('manifest tuning matches actual core and contract is v1.1', () => {
+test('manifest tuning matches actual core and contract is v1.2', () => {
   const c = JSON.parse(readFileSync('game.contract.json', 'utf8'));
-  assert.equal(c.contract_version, '1.1'); assert.deepEqual(c.tuning, tuning);
+  assert.equal(c.contract_version, '1.2'); assert.deepEqual(c.tuning, tuning);
 });
 test('60 ticks move six meters, snapshot0 before inputs', () => {
   const g = createGame(1, empty); assert.equal(snapshot(g).tick, 0);
   for (let i = 0; i < 60; i++) step(g, { ...idle(), move: [0, 1] });
-  close(g.player.pos[2], 6); assert.equal(g.time_left_s, 299);
+  close(g.player.pos[2], 6); assert.equal(g.time_left_s, 239);
 });
 test('yaw90 and diagonal normalization', () => {
   const g = createGame(1, empty);
@@ -27,11 +31,14 @@ test('pickup radius inclusive in XZ, height tolerance, capacity 10', () => {
   const e = step(g, idle()); assert.equal(g.player.carried, 10); assert.equal(g.motes.length, 2); assert.equal(e[0].tick, 1);
   const h = createGame(1, { ...empty, motes: [[0, 1.6, 0]] }); step(h, idle()); assert.equal(h.player.carried, 0, 'too high above ground');
 });
-test('deposit uses needed amount, scores per deposited mote, lights only once', () => {
+test('deposit uses needed amount, scores per deposited mote; a lit lantern then takes motes only as fuel', () => {
   const g = createGame(1, { ...empty, player: { carried: 10 }, lanterns: [{ id: 'L1', pos: [0, 0, 2], deposited: 7 }] });
   const input = { ...idle(), interact: true }; step(g, input);
-  assert.equal(g.player.carried, 7); assert.equal(g.lanterns[0].lit, true); assert.equal(g.score, 3 * 10 + 100);
-  step(g, { ...idle() }); step(g, input); assert.equal(g.score, 130);
+  assert.equal(g.player.carried, 7); assert.equal(g.lanterns[0].lit, true); assert.equal(g.score, 3 * 5 + 100);
+  // Replaced rule: re-interacting no longer does nothing; 2 ticks of decay -> ceil((100-99.97)/10) = 1 mote refuels.
+  step(g, { ...idle() }); const e = step(g, input);
+  assert.deepEqual(e.find(x => x.name === 'refuel')?.data, { lantern_id: 'L1', amount: 1, fuel: 100 });
+  assert.equal(g.player.carried, 6); assert.equal(g.score, 120); assert.equal(e.some(x => x.name === 'lantern_lit'), false);
 });
 test('interact radius 2.0 inclusive, nearest then smaller id', () => {
   const g = createGame(1, { ...empty, player: { carried: 4 }, lanterns: [{ id: 'L2', pos: [2, 0, 0] }, { id: 'L1', pos: [-2, 0, 0] }] });
@@ -51,10 +58,12 @@ test('multiple simultaneous contacts lose one flame, invulnerable afterwards', (
   const g = createGame(1, { ...empty, shades: [{ pos: [0, 0, 0] }, { pos: [0, 0, 0] }] });
   step(g, idle()); assert.equal(g.player.flames, 2); step(g, idle()); assert.equal(g.player.flames, 2);
 });
-test('win stops subsequent steps, adds bonus once', () => {
-  const g = createGame(1, { ...empty, lanterns: Array.from({ length: 5 }, (_, i) => ({ id: `L${i + 1}`, lit: true })) });
-  const events = step(g, idle()); assert.equal(g.state, 'won'); assert.equal(events.at(-1)?.name, 'game_over');
-  assert.equal(g.score, 299 * 2 + 3 * 50);
+test('all lanterns lit no longer ends the night; dawn win stops subsequent steps, adds bonus once', () => {
+  const all = Array.from({ length: 5 }, (_, i) => ({ id: `L${i + 1}`, lit: true }));
+  const early = createGame(1, { ...empty, lanterns: all }); step(early, idle()); assert.equal(early.state, 'playing');
+  const g = createGame(1, { ...empty, time_left_s: 1 / 60, lanterns: all });
+  const events = step(g, idle()); assert.equal(g.state, 'won'); assert.equal(g.result, 'dawn_survived'); assert.equal(events.at(-1)?.name, 'game_over');
+  assert.equal(g.score, 5 * (50 + 99) + 3 * 50, 'each lit lantern 50 + floor(99.98), each flame 50, no time bonus');
   const score = g.score; assert.deepEqual(step(g, idle()), []); assert.equal(g.tick, 1); assert.equal(g.score, score);
 });
 test('dawn loss', () => { const g = createGame(1, { ...empty, time_left_s: 1 / 60 }); step(g, idle()); assert.equal(g.state, 'lost'); assert.equal(g.result, 'dawn'); });

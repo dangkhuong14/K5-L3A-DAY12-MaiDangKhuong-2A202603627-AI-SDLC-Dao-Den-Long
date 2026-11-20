@@ -141,12 +141,17 @@ test('motes: 20 distinct start points, +1 every 240 ticks up to the point count,
   assert.equal(drop.snap(479).motes.length, 1); assert.equal(drop.snap(480).motes.length, 0);
 });
 
-test('same-tick win beats dawn; no_flames beats all_lit; bonus = floor(time)*2 + 50*flames', () => {
-  const lit = Array.from({ length: 4 }, (_, i) => ({ id: `L${i + 2}`, lit: true }));
-  const win = run(1, 5, { ...quiet, time_left_s: 1 / 60, player: { carried: 10, pos: [0, 0, 24] }, lanterns: lit }, [{ tick: 0, interact: true }]);
-  assert.equal(win.end.state, 'won'); assert.equal(win.end.score, 10 * 10 + 100 + 0 + 3 * 50);
+// Ticket-03 replaced this Ticket-02 test ("same-tick win beats dawn; no_flames beats all_lit; bonus = floor(time)*2"):
+// all_lit and the time bonus no longer exist. The same-tick ordering it guarded is kept: lighting on the dawn tick counts,
+// and no_flames still wins over a dawn win.
+test('same-tick: lantern lit on the dawn tick counts for the 3/5 threshold; no_flames beats dawn_survived', () => {
+  const two = [{ id: 'L2', lit: true, fuel: 50 }, { id: 'L3', lit: true, fuel: 50 }];
+  const win = run(1, 5, { ...quiet, time_left_s: 1 / 60, player: { carried: 10, pos: [0, 0, 24] }, lanterns: two }, [{ tick: 0, interact: true }]);
+  assert.deepEqual(win.events('game_over')[0].data, { result: 'won', reason: 'dawn_survived' });
+  // 10 motes*5 + first light 100 + L1 (50+100) + L2,L3 (50+49 each, after 1 tick decay) + 3 flames*50
+  assert.equal(win.end.score, 50 + 100 + 150 + 2 * 99 + 150);
   const all = Array.from({ length: 5 }, (_, i) => ({ id: `L${i + 1}`, lit: true }));
-  const both = run(1, 5, { ...quiet, player: { flames: 1 }, lanterns: all, shades: [{ id: 'S1', pos: [0, 0, 0] }] });
+  const both = run(1, 5, { ...quiet, time_left_s: 1 / 60, player: { flames: 1 }, lanterns: all, shades: [{ id: 'S1', pos: [0, 0, 0] }] });
   assert.deepEqual(both.events('game_over')[0].data, { result: 'lost', reason: 'no_flames' });
 });
 

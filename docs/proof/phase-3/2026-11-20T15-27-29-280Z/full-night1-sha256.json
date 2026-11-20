@@ -1,0 +1,16 @@
+{
+  "a": "5a4d6d1ab0b976ad8563f296353cf149924bad7bf2dc88e44777f9b5f8384f5d",
+  "b": "5a4d6d1ab0b976ad8563f296353cf149924bad7bf2dc88e44777f9b5f8384f5d",
+  "ms_a": 2090,
+  "end": {
+    "type": "end",
+    "ticks": 14400,
+    "sim_tick": 14400,
+    "state": "lost",
+    "score": 0
+  },
+  "fuel_events": {
+    "lantern_out": 0,
+    "fuel_drain": 0
+  }
+}

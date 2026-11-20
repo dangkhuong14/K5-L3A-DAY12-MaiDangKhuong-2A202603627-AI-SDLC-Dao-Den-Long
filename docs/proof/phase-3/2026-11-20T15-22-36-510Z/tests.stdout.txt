@@ -1,0 +1,60 @@
+
+> dao-den-long@1.0.0 test
+> tsx --test game/tests/*.test.ts
+
+✔ manifest tuning matches actual core and contract is v1.2 (3.3857ms)
+✔ 60 ticks move six meters, snapshot0 before inputs (6.0321ms)
+✔ yaw90 and diagonal normalization (1.5623ms)
+✔ pickup radius inclusive in XZ, height tolerance, capacity 10 (1.1411ms)
+✔ deposit uses needed amount, scores per deposited mote; a lit lantern then takes motes only as fuel (0.8409ms)
+✔ interact radius 2.0 inclusive, nearest then smaller id (23.5229ms)
+✔ pulse costs once on held edge and stuns (1.2971ms)
+✔ scenario initialization: no score/events, partial lamp override (0.3447ms)
+✔ multiple simultaneous contacts lose one flame, invulnerable afterwards (0.971ms)
+✔ all lanterns lit no longer ends the night; dawn win stops subsequent steps, adds bonus once (0.8717ms)
+✔ dawn loss (0.2899ms)
+✔ deterministic generated world (1.0143ms)
+✔ CLI persistent frames, deterministic output, error code 2 (1117.306ms)
+✔ browser keys map A/left to screen-left and D/right to screen-right at every yaw (6.1179ms)
+✔ W/S remain forward/backward; opposite keys cancel (1.6323ms)
+✔ v1.1 snapshot shape, night_start event, --night 2/3 accepted, bad night exits 2 (1121.0432ms)
+✔ dash: 14 m/s for 12 ticks (2.8 m), facing when idle, cooldown 90 ticks from start, keeps altitude in air (610.5928ms)
+✔ jump: 7 m/s, gravity 20, only from ground, lands after 42 ticks (369.4351ms)
+✔ fall off island: -1 flame, lose all motes, wait 60 ticks, respawn at start with invuln 90 (498.042ms)
+✔ night 2 launch pad flies ~1.4 s to the other island; bridge is walkable (814.7472ms)
+✔ night 3: cliffs block, ramp climbs to tier 1, pad lands on tier 2, tower blocks (636.1971ms)
+✔ drifter: chases at >=5 motes, steals min(3,carried) once, flees 240 ticks then removed; invuln does not protect (429.702ms)
+✔ drifter + pulse: chase -> flee without stealing; flee with loot drops it as dropped motes, removed after 120 (427.3241ms)
+✔ drifter schedule: D1 at tick 1200 on night 2, none on night 1 (459.0983ms)
+✔ wind charm: 600 ticks of 7.2 m/s and dash without cooldown; respawn after 2700 (217.6691ms)
+✔ wind on night 3: warning at 1680, active 1800..2099, pushes 2 m/s; wind_enabled false disables (462.5146ms)
+✔ pause: tick advances, sim_tick/time/cooldowns freeze, state paused, events paused/resumed (210.5529ms)
+✔ motes: 20 distinct start points, +1 every 240 ticks up to the point count, dropped TTL 480 (422.8616ms)
+✔ same-tick: lantern lit on the dawn tick counts for the 3/5 threshold; no_flames beats dawn_survived (474.8012ms)
+✔ deterministic full-night replay incl. generated ids, and full night within 30 s (18489.1521ms)
+✔ v1.2 snapshot: lantern fuel/ever_lit/relit_count, player capacity, shade target_lantern_id; lit without fuel = 100 (310.0362ms)
+✔ fuel decays 1/s in integer 1/60 units; at 0 the lantern goes out (lantern_out, deposited 0, ever_lit kept) (306.201ms)
+✔ refuel: used = min(carried, ceil((100-fuel)/10)), fuel capped at 100, +5 per mote; full lanterns are skipped (808.3513ms)
+✔ a full lantern is never selected: no event, no score (713.3767ms)
+✔ relight: ever_lit lantern costs 5 motes, +40, relight true, relit_count++; capacity = 10 + 2 x lights, max 20 (1008.7334ms)
+✔ fuel < 30 loses the safe zone (exactly 30 keeps it); wander shade goes to the nearest weak lantern and drains (694.5732ms)
+✔ drain: two shades stack (5+5+1 per s), lantern goes out, shades return to wander; drain -> chase within 6 m (643.7343ms)
+✔ refuel to >= 30 with shades inside 6 m: they are evacuated to the edge in 30 ticks, harmless, back to wander (202.5327ms)
+✔ pulse: drain shade is stunned for +15 (normal +5); stun always ends in wander (880.1665ms)
+✔ win at dawn needs ceil(0.6 x total) lit: 3/5, 4/6, 5/7; below -> lost dawn; all lit does not end early (1653.8675ms)
+✔ night durations 240 / 270 / 300 s end at dawn; deterministic full night incl. fuel events (17482.6131ms)
+✔ pulse: stun 120 ticks, 4 m push in first 15 ticks, re-pulse refreshes, never removes (16.6429ms)
+✔ pulse uses 3D distance from foot + 0.8 m, requires 3 motes and cooldown (34.8031ms)
+✔ newly lit lantern evacuates inside shades to the edge within 30 ticks without damage (6.1354ms)
+✔ outside shades are blocked at the 6 m edge of a lit lantern (10.7233ms)
+✔ shade chases at 4 m/s within 12 m, ignores farther player, hit causes recoil + drop (5.2868ms)
+✔ coincident pursuers separate, keep all IDs and deterministic replay (26.8685ms)
+✔ spawn schedule night 1: 2 at tick 300, 1 per 480 ticks, max 6, >= 15 m from player, ids S1.. (335.4666ms)
+ℹ tests 48
+ℹ suites 0
+ℹ pass 48
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 26069.0391

@@ -4,6 +4,8 @@ Dành cho người lần đầu làm game, ưu tiên hiểu yêu cầu và cách
 
 ## Tình trạng hiện tại
 
+> Cập nhật 2026-11-20: game đã làm tới Phase 3 (Ticket-03, Contract v1.2). Các gạch đầu dòng dưới đây là ghi chú lúc chuẩn bị Phase 1, giữ làm lịch sử. Trạng thái và bằng chứng hiện hành: [verification/phase-3.md](verification/phase-3.md).
+
 - Đã đối chiếu README, GUIDE, CHECKPOINTS, RULES và RUBRIC trong repo.
 - Đã đọc đầy đủ PRD-0 và Test Contract v1.0 từ [phase1.txt](../phase1.txt) do người làm bổ sung sau bản nháp đầu.
 - Contract đã đủ rõ để đề xuất kiến trúc; các số tuning và luật gameplay còn mơ hồ cần chốt trước khi code. Các mục ghi “chờ contract” ở bản câu hỏi ban đầu được cập nhật bằng phần trả lời Phase 1 trong file đó.
@@ -20,6 +22,10 @@ Dành cho người lần đầu làm game, ưu tiên hiểu yêu cầu và cách
 | [05-TOOLS-AND-PLAN.md](05-TOOLS-AND-PLAN.md) | Chọn công cụ và lộ trình cho người mới |
 | [06-TRACKING.md](06-TRACKING.md) | Giả định, truy vết, thay đổi, bằng chứng và nhật ký AI |
 | [07-PHASE-2-SPEC.md](07-PHASE-2-SPEC.md) | Spec Phase 2 (Ticket-02) với acceptance criteria cho từng tính năng mới |
+| [08-PHASE-3-SPEC.md](08-PHASE-3-SPEC.md) | Spec Phase 3 (Ticket-03 "Đèn cạn dầu", v1.2) với acceptance criteria |
+| [adr/ADR-003-den-can-dau.md](adr/ADR-003-den-can-dau.md) | Quyết định thiết kế: mô hình trạng thái đèn và luật thắng mới |
+| [../CHANGELOG.md](../CHANGELOG.md) | Breaking changes Phase 3 và danh sách test bị thay |
+| [verification/phase-3.md](verification/phase-3.md) | Bản ghi kiểm chứng Phase 3 |
 
 ## Việc cần làm ngay
 

@@ -109,3 +109,21 @@ button.primary:hover { box-shadow: 0 8px 30px rgba(242, 193, 78, .55); }
 .settings output { text-align: right; font-variant-numeric: tabular-nums; opacity: .8; }
 input[type=range] { accent-color: var(--gold); width: 100%; }
 input[type=checkbox] { accent-color: var(--gold); width: 18px; height: 18px; }
+
+/* ---------- Ticket-03: fuel, capacity, goal, colorblind ---------- */
+:root { --warn: #FF5A5F; }
+body.cb { --danger: #FFFFFF; --warn: #FFFFFF; }
+#goal { margin-top: 6px; padding: 5px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; text-align: right; }
+#goal.ok { border-color: rgba(242, 193, 78, .7); color: var(--gold); }
+.warn { color: var(--warn); font-weight: 600; }
+body.cb .warn::before, body.cb .toast.danger::before, body.cb #timer.danger::before, body.cb #arrow.weak span::before { content: '⚠ '; }
+body.cb #arrow.weak span::before { content: ''; }
+#status .weak { border-color: var(--warn); animation: blink 1s steps(2, start) infinite; }
+#motebar { flex-wrap: wrap; max-width: 320px; justify-content: center; gap: 4px; }
+#motebar i { width: 18px; height: 18px; }
+#motebar i.lock { opacity: .18; border-style: dashed; transform: scale(.7); }
+#arrow.weak .tip { filter: hue-rotate(-40deg) saturate(1.6); }
+#arrow.weak span { color: var(--warn); }
+body.cb .toast.danger { border-color: #FFFFFF; color: #FFFFFF; }
+body.cb #timer.danger { border-color: #FFFFFF; }
+.settings label.check small { opacity: .7; font-size: 12px; }

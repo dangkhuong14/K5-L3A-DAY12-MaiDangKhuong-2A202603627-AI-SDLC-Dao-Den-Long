@@ -1,10 +1,10 @@
 # Day 12 — AI SDLC: Đảo Đèn Lồng
 
-## Bản game trong repo này — Phase 2 (Ticket-02 "Ba hòn đảo", Contract v1.1)
+## Bản game trong repo này — Phase 3 (Ticket-03 "Đèn cạn dầu", Contract v1.2)
 
-Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Ba Đêm: Đảo Bến → Đảo Cau → Đảo Chuông, có Gió Lạc, Bùa Gió, gió mạnh, menu, tạm dừng, cài đặt, âm thanh và HUD đầy đủ. Điều khiển, thứ tự tick, điểm số và giả định: [game/README.md](game/README.md).
+Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Ba Đêm: Đảo Bến → Đảo Cau → Đảo Chuông, có Gió Lạc, Bùa Gió, gió mạnh, menu, tạm dừng, cài đặt, âm thanh và HUD đầy đủ. Phase 3: đèn cạn dầu và tắt, Bóng Mực hút dầu đèn yếu, châm dầu và thắp lại, túi lớn dần, thắng khi giữ đủ 60% đèn sáng tới bình minh (240/270/300 s), chế độ mù màu. Điều khiển, thứ tự tick, điểm số và giả định: [game/README.md](game/README.md).
 
-[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing) (video Phase 2 chưa quay; video bàn giao cuối ở Phase 4).
+[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing) (video Phase 2–3 chưa quay; video bàn giao cuối ở Phase 4).
 
 Cài và chơi từ gốc repo (Node.js 22.12+ hoặc 24):
 
@@ -13,11 +13,12 @@ npm ci
 npm run dev
 ```
 
-Mở địa chỉ Vite in ra. WASD/mũi tên chạy, Space nhảy, Shift lướt, E nạp đèn, Q tỏa sáng, Esc/P tạm dừng, kéo chuột xoay camera, lăn chuột zoom.
+Mở địa chỉ Vite in ra. WASD/mũi tên chạy, Space nhảy, Shift lướt, E nạp / thắp lại / châm dầu đèn, Q tỏa sáng, Esc/P tạm dừng, kéo chuột xoay camera, lăn chuột zoom.
 
 - Test: `npm test`; build: `npm run build`.
 - Headless: `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl` (`--night` nhận 1, 2, 3).
-- Bằng chứng Phase 2: `npm run evidence:phase2` → thư mục mới trong docs/proof/phase-2/. Lần chạy đã ghi: [results.json](docs/proof/phase-2/2026-11-20T13-21-06-823Z/results.json) (`passed: true`), [tóm tắt + ảnh chơi thử](docs/proof/phase-2/summary.md), [bản ghi kiểm chứng](docs/verification/phase-2.md).
+- Bằng chứng Phase 3: `npm run evidence:phase3` → thư mục mới trong docs/proof/phase-3/. [Tóm tắt + ảnh chơi thử](docs/proof/phase-3/summary.md), [bản ghi kiểm chứng](docs/verification/phase-3.md), [spec Phase 3](docs/08-PHASE-3-SPEC.md), [ADR-003](docs/adr/ADR-003-den-can-dau.md), [CHANGELOG](CHANGELOG.md) (breaking changes và test bị thay).
+- Bằng chứng Phase 2 (lịch sử, oracle v1.1 nên dự kiến FAIL nếu chạy lại với v1.2): `npm run evidence:phase2` → thư mục mới trong docs/proof/phase-2/. Lần chạy đã ghi: [results.json](docs/proof/phase-2/2026-11-20T13-21-06-823Z/results.json) (`passed: true`), [tóm tắt + ảnh chơi thử](docs/proof/phase-2/summary.md), [bản ghi kiểm chứng](docs/verification/phase-2.md).
 - [Spec Phase 2 với acceptance criteria](docs/07-PHASE-2-SPEC.md).
 - Phase 1: [bằng chứng](docs/proof/phase-1/2026-11-20T09-29-34-321Z/results.json), [hướng dẫn nộp](docs/NOP-PHASE-1.md), [kiểm chứng](docs/verification/phase-1.md). Script `npm run evidence` của Phase 1 giữ nguyên làm lịch sử, oracle theo số Phase 1.
 - Harness AI: [CLAUDE.md](CLAUDE.md), skill [.claude/skills/verify-game](.claude/skills/verify-game/SKILL.md), cấu hình preview [.claude/launch.json](.claude/launch.json).

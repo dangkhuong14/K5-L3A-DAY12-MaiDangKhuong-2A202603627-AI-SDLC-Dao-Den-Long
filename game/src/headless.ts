@@ -26,7 +26,7 @@ const scenario = opts.scenario ? load(opts.scenario) : {};
 if (!object(scenario)) fail('Scenario must be an object');
 if (scenario.player !== undefined) {
   const p = scenario.player;
-  if (!object(p) || !opt(p, 'pos', vec) || !['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks'].every(k => opt(p, k, count))) fail('Invalid player');
+  if (!object(p) || !opt(p, 'pos', vec) || !['carried', 'flames', 'invuln_ticks', 'dash_cd_ticks', 'pulse_cd_ticks', 'charm_ticks', 'successful_lights'].every(k => opt(p, k, count))) fail('Invalid player');
 }
 for (const k of ['random_motes', 'random_shades', 'random_drifters', 'wind_enabled']) if (!opt(scenario, k, bool)) fail(`Invalid ${k}`);
 if (!opt(scenario, 'time_left_s', v => num(v) && v >= 0)) fail('Invalid time_left_s');
@@ -39,8 +39,8 @@ const list = (k: string, entry: (x: any) => boolean) => {
   if (!Array.isArray(scenario[k]) || !scenario[k].every((x: any) => object(x) && entry(x))) fail(`Invalid ${k}`);
   uniqueIds(scenario[k], k);
 };
-list('shades', s => vec(s.pos) && opt(s, 'state', v => ['spawning', 'wander', 'chase', 'recoil', 'stunned'].includes(v)) && opt(s, 'state_ticks_left', count));
-list('lanterns', l => typeof l.id === 'string' && opt(l, 'pos', vec) && opt(l, 'lit', bool) && opt(l, 'deposited', v => count(v) && v <= 10));
+list('shades', s => vec(s.pos) && opt(s, 'state', v => ['spawning', 'wander', 'chase', 'recoil', 'stunned', 'drain'].includes(v)) && opt(s, 'state_ticks_left', count) && opt(s, 'target_lantern_id', v => typeof v === 'string'));
+list('lanterns', l => typeof l.id === 'string' && opt(l, 'pos', vec) && opt(l, 'lit', bool) && opt(l, 'deposited', v => count(v) && v <= 10) && opt(l, 'fuel', v => num(v) && v >= 0 && v <= 100) && opt(l, 'ever_lit', bool));
 list('drifters', d => vec(d.pos) && opt(d, 'state', v => ['idle', 'chase', 'flee'].includes(v)) && opt(d, 'stolen', count) && opt(d, 'state_ticks_left', count));
 list('charms', c => opt(c, 'pos', vec) && opt(c, 'available', bool) && opt(c, 'respawn_ticks', count));
 

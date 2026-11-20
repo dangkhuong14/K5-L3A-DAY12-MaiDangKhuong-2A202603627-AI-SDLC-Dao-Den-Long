@@ -1,6 +1,6 @@
 // Synthesized WebAudio: no downloaded assets. Web layer only (core never imports this).
 export type Sfx = 'pickup' | 'deposit' | 'light' | 'pulse' | 'hit' | 'fall' | 'jump' | 'pad' | 'dash' | 'win' | 'lose'
-  | 'spawn' | 'count' | 'count_last' | 'wind' | 'charm' | 'steal' | 'drop' | 'click';
+  | 'spawn' | 'count' | 'count_last' | 'wind' | 'charm' | 'steal' | 'drop' | 'click' | 'refuel' | 'out' | 'drain';
 
 const SCALES: Record<number, number[]> = { // gentle pentatonic per night (Hz)
   1: [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33],
@@ -67,6 +67,9 @@ export class Sound {
       case 'steal': this.tone(900, 0.35, 'sawtooth', 0.07, 260); this.hiss(0.3, 0.12, 2500, 900); break;
       case 'drop': this.tone(700, 0.25, 'triangle', 0.14, 1100); break;
       case 'click': this.tone(660, 0.05, 'triangle', 0.1); break;
+      case 'refuel': this.tone(392, 0.22, 'triangle', 0.16, 784); this.tone(1175, 0.18, 'sine', 0.06, undefined, 0.08); break;
+      case 'out': this.tone(392, 0.8, 'triangle', 0.16, 98); this.hiss(0.6, 0.14, 1800, 200, 'lowpass'); break;
+      case 'drain': this.tone(70, 0.6, 'sawtooth', 0.06, 50); this.tone(220, 0.4, 'sine', 0.05, 140, 0.1); break;
     }
   }
 
