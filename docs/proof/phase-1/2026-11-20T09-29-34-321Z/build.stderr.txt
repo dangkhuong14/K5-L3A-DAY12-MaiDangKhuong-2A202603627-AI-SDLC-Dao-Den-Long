@@ -1,0 +1,4 @@
+[33m
+[1m(!)[22m outDir [37m[2mD:\AI_ThucChien\Lab12\K5-L3-LAB-Day12-AI-SDLC\dist[22m[33m is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+[39m

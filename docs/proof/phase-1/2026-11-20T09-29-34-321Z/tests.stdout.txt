@@ -1,0 +1,32 @@
+
+> dao-den-long@1.0.0 test
+> tsx --test game/tests/*.test.ts
+
+✔ manifest tuning matches actual core (3.8751ms)
+✔ 60 ticks move seven meters, snapshot0 before inputs (2.54ms)
+✔ yaw90 and diagonal normalization (0.7818ms)
+✔ pickup radius inclusive, uses XZ, capacity (0.4051ms)
+✔ deposit uses needed amount, lighting only once (0.6807ms)
+✔ pulse costs once on held edge and stuns (0.7838ms)
+✔ scenario initialization no score/events and partial lamp override (0.234ms)
+✔ multiple simultaneous contacts lose one flame during invulnerability (0.4692ms)
+✔ win stops subsequent steps, adds bonus once (0.6213ms)
+✔ dawn loss (0.4447ms)
+✔ deterministic generated world (1.6193ms)
+✔ CLI persistent frames, deterministic output, error code2 (468.3256ms)
+✔ browser keys map A/left to screen-left and D/right to screen-right at every yaw (5.2199ms)
+✔ W/S remain forward/backward; opposite keys cancel (0.9859ms)
+✔ pulse lives exactly 120 ticks, follows player, held input does not refresh (3.228ms)
+✔ pulse retreats smoothly and does not remove or teleport shades (1.289ms)
+✔ newly lit lantern evacuates shades smoothly and stays safe beyond two seconds (5.8215ms)
+✔ outside shades never enter permanent safe area (5.9429ms)
+✔ coincident pursuers separate, keep all IDs and deterministic replay (6.8765ms)
+✔ pulse border rejects new entrants without repeated score or cost (1.9045ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 957.9269

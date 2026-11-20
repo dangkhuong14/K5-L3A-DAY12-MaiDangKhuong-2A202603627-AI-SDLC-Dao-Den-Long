@@ -1,0 +1,176 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "label": "tests",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "test"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "build",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "light-five-lanterns",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "60",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\light-five-lanterns.jsonl",
+        "--scenario",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\light-five-lanterns.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\light-five-lanterns.inputs.json"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "lose-by-shade",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "60",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\lose-by-shade.jsonl",
+        "--scenario",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\lose-by-shade.scenario.json"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "lose-by-dawn",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "60",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\lose-by-dawn.jsonl",
+        "--scenario",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\lose-by-dawn.scenario.json"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "pulse",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "2",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\pulse.jsonl",
+        "--scenario",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\pulse.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\pulse.inputs.json"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "seeded-replay-a",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "600",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\seeded-replay-a.jsonl"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "seeded-replay-b",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "600",
+        "--out",
+        "docs\\proof\\phase-1\\2026-11-20T09-29-34-321Z\\seeded-replay-b.jsonl"
+      ],
+      "exit_code": 0,
+      "passed": true
+    },
+    {
+      "label": "oracle-five-lanterns",
+      "passed": true
+    },
+    {
+      "label": "oracle-lose-by-shade",
+      "passed": true
+    },
+    {
+      "label": "oracle-lose-by-dawn",
+      "passed": true
+    },
+    {
+      "label": "oracle-pulse",
+      "passed": true
+    },
+    {
+      "label": "byte-identical-replay",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "Isolated headless scenarios, not a full playthrough of the default map.",
+    "No browser, screenshot, visual inspection or macOS/Linux validation in this script."
+  ]
+}
