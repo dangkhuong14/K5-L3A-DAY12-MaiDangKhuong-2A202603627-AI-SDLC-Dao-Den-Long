@@ -1,9 +1,12 @@
 {
-  "contract_version": "1.2",
+  "contract_version": "1.3",
   "team": "2A202603627 - Mai Đăng Khương",
   "build_cmd": "npm install && npm run build",
-  "run_cmd": "npm run dev",
+  "run_cmd": "npm start --",
   "headless_cmd": "npm run --silent headless --",
+  "bench_cmd": "npm run --silent bench --",
+  "soak_cmd": "npm run --silent soak --",
+  "web_dev_cmd": "npm run dev",
   "tuning": {
     "player_speed": 6,
     "carry_capacity": 10,

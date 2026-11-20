@@ -1,31 +1,81 @@
-# Day 12 — AI SDLC: Đảo Đèn Lồng
+# Đảo Đèn Lồng — v1.0.0
 
-## Bản game trong repo này — Phase 3 (Ticket-03 "Đèn cạn dầu", Contract v1.2)
+> **🎬 Video demo v1.0.0 (2 phút 07 giây):** [demo.mp4 trên Release v1.0.0](https://github.com/dangkhuong14/K5-L3A-DAY12-MaiDangKhuong-2A202603627-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/demo.mp4) · trang Release: [v1.0.0](https://github.com/dangkhuong14/K5-L3A-DAY12-MaiDangKhuong-2A202603627-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0)
 
-Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Ba Đêm: Đảo Bến → Đảo Cau → Đảo Chuông, có Gió Lạc, Bùa Gió, gió mạnh, menu, tạm dừng, cài đặt, âm thanh và HUD đầy đủ. Phase 3: đèn cạn dầu và tắt, Bóng Mực hút dầu đèn yếu, châm dầu và thắp lại, túi lớn dần, thắng khi giữ đủ 60% đèn sáng tới bình minh (240/270/300 s), chế độ mù màu. Điều khiển, thứ tự tick, điểm số và giả định: [game/README.md](game/README.md).
+Game 3D góc nhìn thứ ba. Bạn là Mây, người giữ đèn nhỏ tuổi: gom đom đóm, thắp và giữ dầu cho các Đèn Lồng Lớn, né Bóng Mực trong sương đen cho tới bình minh, qua ba Đêm Đảo Bến → Đảo Cau → Đảo Chuông. Tự dựng bằng Three.js + TypeScript, bản desktop chạy bằng Electron. Luật chơi, thứ tự tick và giả định: [game/README.md](game/README.md).
 
-[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing) (video Phase 2–3 chưa quay; video bàn giao cuối ở Phase 4).
+![Đang chơi: Bóng Mực xuất hiện, phụ đề và mũi tên mép màn hình](docs/screenshots/07-play-spawn.png)
 
-Cài và chơi từ gốc repo (Node.js 22.12+ hoặc 24):
+| Bảng xếp hạng | Đổi phím, báo trùng | Cảnh benchmark 200 Bóng |
+|---|---|---|
+| ![](docs/screenshots/11-leaderboard-saved.png) | ![](docs/screenshots/04-conflict.png) | ![](docs/screenshots/12-bench.png) |
+
+## Yêu cầu hệ thống
+
+- Node.js 22.12+ hoặc 24 (kèm npm), Git. Windows 10/11, macOS 12+ hoặc Linux x64/arm64 có môi trường đồ họa.
+- GPU hỗ trợ WebGL 2. Laptop có GPU rời: bản desktop tự xin GPU hiệu năng cao.
+- ~600 MB đĩa cho `node_modules` (Electron chiếm phần lớn). Mạng khi `npm ci` lần đầu (npm tải Electron).
+- Đã thử: Windows 11, Intel i7-9750H, GTX 1650 / UHD 630, 16 GB RAM (15.8 GB khả dụng), Node 24.14.
+
+## Cài đặt và chơi (3 lệnh)
 
 ```sh
+git clone <url-repo> && cd <thư-mục-repo>
 npm ci
-npm run dev
+npm start
 ```
 
-Mở địa chỉ Vite in ra. WASD/mũi tên chạy, Space nhảy, Shift lướt, E nạp / thắp lại / châm dầu đèn, Q tỏa sáng, Esc/P tạm dừng, kéo chuột xoay camera, lăn chuột zoom.
+`npm start` build bản web rồi mở cửa sổ game 1280×720. Muốn chơi trên trình duyệt thay vì desktop: `npm run dev` rồi mở địa chỉ Vite in ra, hoặc `npm run build && npm run serve` → http://localhost:8080. Bản web lưu bảng xếp hạng trong `localStorage` của trình duyệt.
 
-- Test: `npm test`; build: `npm run build`.
-- Headless: `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl` (`--night` nhận 1, 2, 3).
-- Bằng chứng Phase 3: `npm run evidence:phase3` → thư mục mới trong docs/proof/phase-3/. [Tóm tắt + ảnh chơi thử](docs/proof/phase-3/summary.md), [bản ghi kiểm chứng](docs/verification/phase-3.md), [spec Phase 3](docs/08-PHASE-3-SPEC.md), [ADR-003](docs/adr/ADR-003-den-can-dau.md), [CHANGELOG](CHANGELOG.md) (breaking changes và test bị thay).
-- Bằng chứng Phase 2 (lịch sử, oracle v1.1 nên dự kiến FAIL nếu chạy lại với v1.2): `npm run evidence:phase2` → thư mục mới trong docs/proof/phase-2/. Lần chạy đã ghi: [results.json](docs/proof/phase-2/2026-11-20T13-21-06-823Z/results.json) (`passed: true`), [tóm tắt + ảnh chơi thử](docs/proof/phase-2/summary.md), [bản ghi kiểm chứng](docs/verification/phase-2.md).
-- [Spec Phase 2 với acceptance criteria](docs/07-PHASE-2-SPEC.md).
-- Phase 1: [bằng chứng](docs/proof/phase-1/2026-11-20T09-29-34-321Z/results.json), [hướng dẫn nộp](docs/NOP-PHASE-1.md), [kiểm chứng](docs/verification/phase-1.md). Script `npm run evidence` của Phase 1 giữ nguyên làm lịch sử, oracle theo số Phase 1.
+## Điều khiển
+
+| Phím mặc định | Tác dụng |
+|---|---|
+| WASD / mũi tên | Chạy theo hướng camera |
+| Space | Nhảy |
+| Shift | Lướt |
+| E | Nạp đom đóm để thắp / thắp lại / châm dầu đèn gần |
+| Q | Tỏa Sáng (3 đom đóm, làm choáng Bóng trong 5 m) |
+| Esc / P | Tạm dừng |
+| Kéo / lăn chuột | Xoay / zoom camera |
+| F3 · Enter | Hiện FPS · nút chính |
+
+Mọi hành động đổi được ở **Cài đặt → Đổi phím** (báo trùng phím, có "Khôi phục mặc định"). Cài đặt còn có: âm lượng, độ nhạy chuột, bảng màu mù màu, phụ đề và chỉ báo hình ảnh, giảm chuyển động (tắt rung camera và chớp màn hình), chữ lớn ×1.25 (chữ thường tối thiểu 18 px). Tất cả được lưu.
+
+## Lệnh
+
+| Việc | Lệnh |
+|---|---|
+| Test (Phase 1–4) | `npm test` |
+| Build web → `dist/` | `npm run build` |
+| Headless (Test Contract) | `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl` |
+| Benchmark → `bench.json` | `npm run --silent bench -- --seed 42 --duration 30 --out bench.json` |
+| Soak 10 Đêm → `soak.json` | `npm run --silent soak -- --seed 7 --nights 10 --out soak.json` |
+| Xuất bảng xếp hạng | `npm start -- --export-leaderboard out.json` |
+| Bằng chứng Phase 4 | `npm run evidence:phase4` → `docs/proof/phase-4/<thời điểm>/` |
+
+Lệnh contract nằm trong [game.contract.json](game.contract.json) (v1.3: `run_cmd`, `bench_cmd`, `soak_cmd`, `headless_cmd`).
+
+- **Bench:** mở cửa sổ 1280×720 (không toàn màn hình), **vsync tắt** (`--disable-gpu-vsync --disable-frame-rate-limit`), cảnh chuẩn Đêm 1 với 200 Bóng `wander`, 100 đom đóm, L1–L3 sáng, camera bay vòng r 30 m · Y 15 m · 15 s/vòng; 3 s khởi động rồi đo đúng `--duration` giây, ghi `bench.json` và thoát mã 0. `peak_mem_mb` đo được (đỉnh tổng working set các tiến trình Electron). Kết quả trên máy làm bài: [bench.json](bench.json).
+- **Soak:** 10 Đêm headless trong một tiến trình, input ngẫu nhiên theo seed; kết quả: [soak.json](soak.json).
+- **Bảng xếp hạng:** sau khi thua bất kỳ Đêm nào hoặc sau màn Bình Minh, nhập tên 3–12 ký tự (chữ, số, `_`, chữ Việt có dấu). Bản desktop lưu ở thư mục dữ liệu ứng dụng (`%APPDATA%/dao-den-long/leaderboard.json` trên Windows, `~/Library/Application Support/dao-den-long/` trên macOS, `~/.config/dao-den-long/` trên Linux). Màn "Bảng xếp hạng" ở menu chính.
+
+## Bản phát hành v1.0.0
+
+Release GitHub `v1.0.0` đính kèm `dao-den-long-web-v1.0.0.zip`: thư mục web tĩnh đã build kèm `serve-dist.mjs`. Giải nén, vào thư mục `dao-den-long-web-v1.0.0` rồi chạy `node serve-dist.mjs . 8080` và mở http://localhost:8080 (trình duyệt chặn ES module khi mở `index.html` bằng `file://`). Bench, soak và export cần mã nguồn: làm theo 3 lệnh ở trên.
+
+## Tài liệu
+
+- [CHANGELOG.md](CHANGELOG.md) (4 phase, breaking changes), [CREDITS.md](CREDITS.md), [LICENSE](LICENSE) (MIT cho code của bài, không gồm tài liệu khóa học).
+- Spec: [Phase 4](docs/09-PHASE-4-SPEC.md), [Phase 3](docs/08-PHASE-3-SPEC.md), [Phase 2](docs/07-PHASE-2-SPEC.md), [Phase 1](docs/02-SPEC.md). ADR: [docs/adr](docs/adr/).
+- Kiểm chứng: [Phase 4](docs/verification/phase-4.md), [Phase 3](docs/verification/phase-3.md), [Phase 2](docs/verification/phase-2.md), [Phase 1](docs/verification/phase-1.md); bằng chứng thô trong [docs/proof](docs/proof/).
+- Retro cả dự án: [docs/RETRO.md](docs/RETRO.md).
 - Harness AI: [CLAUDE.md](CLAUDE.md), skill [.claude/skills/verify-game](.claude/skills/verify-game/SKILL.md), cấu hình preview [.claude/launch.json](.claude/launch.json).
+- Video demo: Phase 1 trên [Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing). Video v1.0.0: [demo.mp4](https://github.com/dangkhuong14/K5-L3A-DAY12-MaiDangKhuong-2A202603627-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/demo.mp4) đính kèm Release v1.0.0.
 
 ### Sáng tạo của tôi
 
-Model low-poly tự tạo, nón lá treo đèn, biển mây và sao; lời dẫn Ông Đăng mỗi Đêm, màn Bình Minh, nhạc ngũ cung tổng hợp riêng mỗi Đêm, hiệu ứng sóng Tỏa Sáng, tia lửa thắp đèn, cây tự thu nhỏ khi che Mây. Chỉ ở lớp hiển thị, không đổi đầu ra headless. Chi tiết: [game/README.md](game/README.md#sáng-tạo-của-tôi), ảnh: [docs/proof/phase-2/manual](docs/proof/phase-2/manual/).
+Model low-poly tự dựng, nón lá treo đèn, biển mây và sao; lời dẫn Ông Đăng mỗi Đêm, màn Bình Minh, nhạc ngũ cung tổng hợp riêng mỗi Đêm, sóng Tỏa Sáng, tia lửa thắp đèn, sợi hút dầu, cây tự thu nhỏ khi che Mây. Chỉ ở lớp hiển thị, không đổi đầu ra headless và không thêm thực thể vào cảnh bench. Chi tiết: [game/README.md](game/README.md#sáng-tạo-của-tôi), ảnh: [docs/screenshots](docs/screenshots/), [docs/proof/phase-2/manual](docs/proof/phase-2/manual/).
 
 ---
 

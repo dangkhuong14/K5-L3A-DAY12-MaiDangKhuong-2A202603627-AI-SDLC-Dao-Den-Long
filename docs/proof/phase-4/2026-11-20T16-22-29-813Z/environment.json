@@ -1,0 +1,9 @@
+{
+  "created_at": "2026-11-20T16:22:29.815Z",
+  "node": "v24.14.1",
+  "platform": "win32",
+  "arch": "x64",
+  "commit": "3ed8670e32bcf7ef0ab8b08ae5860f9b5b946a1a",
+  "working_tree": "M .claude/skills/verify-game/SKILL.md\n M .gitignore\n M CHANGELOG.md\n M CLAUDE.md\n M CREDITS.md\n M README.md\n M game.contract.json\n M game/README.md\n M game/src/core.ts\n M game/src/keyboard.ts\n M game/src/style.css\n M game/src/web.ts\n M game/tests/core.test.ts\n M package-lock.json\n M package.json\n?? LICENSE\n?? bench.json\n?? docs/09-PHASE-4-SPEC.md\n?? docs/RETRO.md\n?? docs/proof/phase-4/\n?? docs/screenshots/\n?? electron/\n?? game/src/leaderboard.ts\n?? game/src/soak.ts\n?? game/tests/phase4.test.ts\n?? phase4.txt\n?? scripts/evidence-phase4.mjs\n?? scripts/serve-dist.mjs\n?? soak.json",
+  "note": "Working-tree run. If later tagged, verify the tagged source matches this run."
+}

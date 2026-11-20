@@ -1,0 +1,495 @@
+{
+  "contract_version": "1.3",
+  "baseline_commit": "3ed8670",
+  "passed": true,
+  "failed": [],
+  "results": [
+    {
+      "label": "tests",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "test"
+      ],
+      "exit_code": 0,
+      "ms": 27279,
+      "passed": true
+    },
+    {
+      "label": "build",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "ms": 4970,
+      "passed": true
+    },
+    {
+      "label": "n1-600-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "600",
+        "--snapshot-every",
+        "1",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-600-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 324,
+      "passed": true
+    },
+    {
+      "label": "n1-600-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "600",
+        "--snapshot-every",
+        "1",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-600-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 414,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n1-600",
+      "passed": true,
+      "sha256": "b4ce17b12f3b9b12feb2afc53c032a3a264da6f8f1192bdf8fa5a21c3806a54a",
+      "bytes": 1365881,
+      "files_kept": false
+    },
+    {
+      "label": "n1-random-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-random-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 443,
+      "passed": true
+    },
+    {
+      "label": "n1-random-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-random-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 511,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n1-random",
+      "passed": true,
+      "sha256": "5026b9772f361665e6921c5d9c2f85e75bab7bc9f6c97994ef2fd030bbf1982c",
+      "bytes": 4522763,
+      "files_kept": false
+    },
+    {
+      "label": "n2-random-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-random-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 583,
+      "passed": true
+    },
+    {
+      "label": "n2-random-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-random-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 574,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n2-random",
+      "passed": true,
+      "sha256": "5ab8f5ef03bf8acdcf521fa3b4a388a73201b13ba44cc98888fdccf8c03151a6",
+      "bytes": 6503662,
+      "files_kept": false
+    },
+    {
+      "label": "n3-random-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-random-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 2291,
+      "passed": true
+    },
+    {
+      "label": "n3-random-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "6000",
+        "--snapshot-every",
+        "1",
+        "--inputs",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\random.inputs.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-random-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 1833,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n3-random",
+      "passed": true,
+      "sha256": "88cffd8303993c1f3e4653dda80be352ccebafad899aafc59f2df47c73b512ce",
+      "bytes": 21894870,
+      "files_kept": false
+    },
+    {
+      "label": "n1-full-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-full-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 1718,
+      "passed": true
+    },
+    {
+      "label": "n1-full-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n1-full-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 1640,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n1-full",
+      "passed": true,
+      "sha256": "5a4d6d1ab0b976ad8563f296353cf149924bad7bf2dc88e44777f9b5f8384f5d",
+      "bytes": 84196,
+      "files_kept": true
+    },
+    {
+      "label": "n2-full-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-full-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 2366,
+      "passed": true
+    },
+    {
+      "label": "n2-full-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n2-full-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 2354,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n2-full",
+      "passed": true,
+      "sha256": "afc0820e62851b8008701fb8dd08454fac9c43a7607d586be1c2d3248b68bc29",
+      "bytes": 104362,
+      "files_kept": true
+    },
+    {
+      "label": "n3-full-v1.3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-full-v1.3.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 3528,
+      "passed": true
+    },
+    {
+      "label": "n3-full-v1.2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\v1.2-src\\headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "21600",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-full.scenario.json",
+        "--out",
+        "docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\n3-full-v1.2.jsonl"
+      ],
+      "exit_code": 0,
+      "ms": 3439,
+      "passed": true
+    },
+    {
+      "label": "headless unchanged n3-full",
+      "passed": true,
+      "sha256": "b73a7a129ffad70b81306b459189c7f200496b99c18404f58db16802de54be19",
+      "bytes": 138306,
+      "files_kept": true
+    },
+    {
+      "label": "full Night 3 ≤ 30 s",
+      "passed": true,
+      "ms": 3528
+    },
+    {
+      "label": "contract v1.3 with bench_cmd and soak_cmd",
+      "passed": true,
+      "bench_cmd": "npm run --silent bench --",
+      "soak_cmd": "npm run --silent soak --",
+      "run_cmd": "npm start --"
+    },
+    {
+      "label": "soak",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "run",
+        "--silent",
+        "soak",
+        "--",
+        "--seed",
+        "7",
+        "--nights",
+        "10",
+        "--out",
+        "D:\\AI_ThucChien\\Lab12\\K5-L3-LAB-Day12-AI-SDLC\\docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\soak.json"
+      ],
+      "exit_code": 0,
+      "ms": 2981,
+      "passed": true
+    },
+    {
+      "label": "soak thresholds",
+      "passed": true,
+      "crashes": 0,
+      "results": [
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost",
+        "lost"
+      ],
+      "mem_start_mb": 55.1,
+      "mem_end_mb": 59.2,
+      "duration_s": 1.6
+    },
+    {
+      "label": "bench",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "run",
+        "--silent",
+        "bench",
+        "--",
+        "--seed",
+        "42",
+        "--duration",
+        "30",
+        "--out",
+        "D:\\AI_ThucChien\\Lab12\\K5-L3-LAB-Day12-AI-SDLC\\docs\\proof\\phase-4\\2026-11-20T16-22-29-813Z\\bench.json"
+      ],
+      "exit_code": 0,
+      "ms": 41239,
+      "passed": true
+    },
+    {
+      "label": "bench thresholds (this machine, reference only)",
+      "passed": true,
+      "avg_fps": 274.9,
+      "p1_low_fps": 111.1,
+      "frame_ms_p95": 5.5,
+      "frames": 8251,
+      "load_ms": 2246,
+      "peak_mem_mb": 468.4,
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 (0x00001F91) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    }
+  ]
+}

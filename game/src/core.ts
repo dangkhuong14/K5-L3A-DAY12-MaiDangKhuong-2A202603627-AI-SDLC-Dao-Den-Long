@@ -130,6 +130,8 @@ export type Game = {
   random: { motes: boolean; shades: boolean; drifters: boolean };
   previous: Input; rng: { motes: Rng; shades: Rng; drops: Rng; drifters: Rng; wind: Rng };
   nextId: { M: number; S: number; D: number }; lastPulseTick: number;
+  /** Ticket-04 bench scene: no spawns, damage, pickups, fuel decay/drain or end of night; shades only wander. Off by default. */
+  bench: boolean;
 };
 
 const mulberry = (seed: number): Rng => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
@@ -162,8 +164,9 @@ export function createGame(seed = 1, scenario: any = {}, nightNo: NightId = 1): 
     motes: [], shades: [], drifters: [], charms: [],
     wind: { enabled: def.wind && scenario.wind_enabled !== false, active: false, warning: false, dir_deg: null },
     random: { motes: scenario.random_motes !== false, shades: scenario.random_shades !== false, drifters: def.drifters && scenario.random_drifters !== false },
-    previous: idle(), rng, nextId: { M: 1, S: 1, D: 1 }, lastPulseTick: -9999
+    previous: idle(), rng, nextId: { M: 1, S: 1, D: 1 }, lastPulseTick: -9999, bench: scenario.bench === true
   };
+  if (g.bench) { g.random = { motes: false, shades: false, drifters: false }; g.wind.enabled = false; }
   for (const patch of scenario.lanterns ?? []) {
     const l = g.lanterns.find(x => x.id === patch.id); if (!l) continue;
     if (patch.pos) l.pos = copy(patch.pos);
@@ -297,8 +300,8 @@ export function step(g: Game, input: Input): Event[] {
   }
   updateWind(g, true);
   // 2b. Fuel: lit lanterns decay 1/s; each draining shade (ascending id) sucks 5/s. Then empty lanterns go out.
-  for (const l of g.lanterns) if (l.lit) l.fuel -= Math.round(tuning.fuel_decay_per_s * FU / rules.tps);
-  for (const s of [...g.shades].sort(byId)) if (s.state === 'drain') {
+  if (!g.bench) for (const l of g.lanterns) if (l.lit) l.fuel -= Math.round(tuning.fuel_decay_per_s * FU / rules.tps);
+  if (!g.bench) for (const s of [...g.shades].sort(byId)) if (s.state === 'drain') {
     const l = g.lanterns.find(x => x.id === s.lantern);
     if (!l || !l.lit) continue;
     l.fuel -= Math.round(tuning.drain_per_s * FU / rules.tps);
@@ -350,7 +353,7 @@ export function step(g: Game, input: Input): Event[] {
   const active = p.respawn === 0;
 
   // 4. Pick up motes and charms.
-  if (active) {
+  if (active && !g.bench) {
     g.motes = g.motes.filter(m => {
       if (p.carried < capacity(p) && distXZ(p.pos, m.pos) <= tuning.pickup_radius && Math.abs(p.pos[1] - m.pos[1]) <= rules.height_tolerance) {
         p.carried++; emit('mote_picked', { carried: p.carried }); return false;
@@ -439,7 +442,7 @@ export function step(g: Game, input: Input): Event[] {
       else if (!l || !l.lit || l.fuel >= LOW || distXZ(s.pos, l.pos) > rules.drain_radius) { s.state = 'wander'; s.lantern = null; s.drainTicks = 0; s.target = null; }
       else return; // stands still while draining
     }
-    if (s.state === 'wander' && active && d <= rules.shade_detect) { s.state = 'chase'; s.lantern = null; }
+    if (s.state === 'wander' && active && !g.bench && d <= rules.shade_detect) { s.state = 'chase'; s.lantern = null; }
     else if (s.state === 'chase' && (!active || d > rules.shade_lose)) s.state = 'wander';
     let dx = 0, dz = 0, sp = speed;
     if (s.state === 'chase') { [dx, dz] = unit(p.pos[0] - starts[i][0], p.pos[2] - starts[i][2]); sp = Math.min(speed, d); }
@@ -461,7 +464,9 @@ export function step(g: Game, input: Input): Event[] {
     }
     // Soft separation so pursuers do not merge into one blob; result never exceeds the state's speed.
     let vx = dx * sp, vz = dz * sp;
+    const sep2 = rules.shade_separation * rules.shade_separation, si = starts[i];
     for (let j = 0; j < starts.length; j++) if (j !== i) {
+      const ex = si[0] - starts[j][0], ez = si[2] - starts[j][2]; if (ex * ex + ez * ez >= sep2 + 1e-9) continue; // cheap reject; exact test below
       const dd = distXZ(starts[i], starts[j]);
       if (dd < rules.shade_separation) {
         const [ux, uz] = dd > 1e-9 ? unit(starts[i][0] - starts[j][0], starts[i][2] - starts[j][2]) : (() => { const a = (Math.min(i, j) * 31 + Math.max(i, j) * 17) * 2.399963 ; const sg = i < j ? 1 : -1; return [Math.cos(a) * sg, Math.sin(a) * sg] as [number, number]; })();
@@ -487,7 +492,7 @@ export function step(g: Game, input: Input): Event[] {
   }
 
   // 9. Contacts: drifters steal first, then shades hit in ascending id order.
-  if (active) {
+  if (active && !g.bench) {
     for (const d of [...g.drifters].sort(byId)) if (d.state === 'chase' && !d.used && distXZ(d.pos, p.pos) <= rules.drifter_touch) {
       const amount = Math.min(rules.drifter_steal, p.carried);
       if (amount > 0) { p.carried -= amount; d.stolen = amount; d.used = true; d.state = 'flee'; d.ticks = rules.drifter_flee_ticks; emit('drifter_steal', { drifter_id: d.id, amount, carried: p.carried }); }
@@ -534,7 +539,7 @@ export function step(g: Game, input: Input): Event[] {
 
   // 11. Win / loss (Ticket-03): no_flames always first; at dawn win only with >= ceil(0.6 x total) lanterns lit.
   const lit = g.lanterns.filter(l => l.lit);
-  const reason = p.flames <= 0 ? 'no_flames' : g.time_left_s <= 0 ? (lit.length >= litNeeded(g.lanterns.length) ? 'dawn_survived' : 'dawn') : null;
+  const reason = g.bench ? null : p.flames <= 0 ? 'no_flames' : g.time_left_s <= 0 ? (lit.length >= litNeeded(g.lanterns.length) ? 'dawn_survived' : 'dawn') : null;
   if (reason) {
     g.state = reason === 'dawn_survived' ? 'won' : 'lost'; g.result = reason;
     if (g.state === 'won') for (const l of lit) g.score += tuning.score.per_lit_lantern_dawn + Math.floor(l.fuel / FU);
@@ -560,4 +565,48 @@ export function snapshot(g: Game) {
     drifters: g.drifters.map(d => ({ id: d.id, pos: rv(d.pos), state: d.state, stolen: d.stolen })),
     charms: g.charms.map(c => ({ id: c.id, pos: rv(c.pos), available: c.available, respawn_s: r3(c.respawn / 60) }))
   };
+}
+
+// ---------- Ticket-04 benchmark scene (pure, deterministic) ----------
+export const BENCH = { shades: 200, motes: 100, island_r: 38, mote_y: 0 } as const;
+/** Night 1 bench scenario: 200 wander shades spread uniformly over the island (outside the lit safe zones), 100 motes, L1–L3 lit at fuel 100, Mây at (0,0,0). */
+export function benchScenario(seed = 42) {
+  const r = mulberry((seed >>> 0) ^ 0xBE4C), def = nights[1];
+  const lit = def.lanterns.slice(0, 3);
+  const inSafe = (x: number, z: number) => lit.some(l => Math.hypot(l[0] - x, l[2] - z) <= tuning.safe_radius + 0.5);
+  const round = (v: number) => Math.round(v * 1000) / 1000;
+  // Shades: sunflower (Vogel) spiral = even area coverage; seeded rotation + small jitter; points in lit safe zones skipped.
+  const rot = r() * Math.PI * 2, spiral = (m: number) => {
+    const pts: number[][] = [];
+    for (let k = 0; k < m; k++) {
+      const d = BENCH.island_r * Math.sqrt((k + 0.5) / m), a = k * 2.399963229728653 + rot;
+      const x = Math.cos(a) * d + (r() - 0.5) * 0.6, z = Math.sin(a) * d + (r() - 0.5) * 0.6;
+      if (!inSafe(x, z) && Math.hypot(x, z) <= BENCH.island_r) pts.push([round(x), 0, round(z)]);
+    }
+    return pts;
+  };
+  let m = BENCH.shades, shadePts = spiral(m);
+  while (shadePts.length < BENCH.shades) shadePts = spiral(++m);
+  while (shadePts.length > BENCH.shades) shadePts.splice(Math.floor(r() * shadePts.length), 1);
+  // Motes: uniform random in the disc, at least 0.8 m apart.
+  const point = (gap: number, taken: number[][]) => {
+    for (let tries = 0; tries < 10000; tries++) {
+      const a = r() * Math.PI * 2, d = BENCH.island_r * Math.sqrt(r()), x = Math.cos(a) * d, z = Math.sin(a) * d;
+      if (!taken.some(q => Math.hypot(q[0] - x, q[2] - z) < gap)) return [round(x), 0, round(z)];
+    }
+    throw new Error('bench: no free point');
+  };
+  const motePts: number[][] = [];
+  for (let i = 0; i < BENCH.motes; i++) motePts.push(point(0.8, motePts));
+  return {
+    bench: true, random_motes: false, random_shades: false, random_drifters: false, wind_enabled: false,
+    player: { pos: [0, 0, 0] },
+    lanterns: ['L1', 'L2', 'L3'].map(id => ({ id, lit: true, fuel: tuning.fuel_max })),
+    shades: shadePts.map((pos, i) => ({ id: `S${i + 1}`, pos, state: 'wander' })),
+    motes: motePts.map((p, i) => ({ id: `M${i + 1}`, pos: [p[0], BENCH.mote_y, p[2]] }))
+  };
+}
+/** Camera orbit for the bench: centre (0,0,0), r = 30 m, Y = 15 m, starts at (30,15,0), counter-clockwise seen from above, 15 s per lap. */
+export function benchCamera(t_s: number): [number, number, number] {
+  const a = 2 * Math.PI * t_s / 15; return [30 * Math.cos(a), 15, -30 * Math.sin(a)];
 }

@@ -2,6 +2,7 @@
 // pickup 1.0 m, interact 2.0 m, 3 flames, +5 per pulse hit).
 // Ticket-03 (contract v1.2) updates, see docs/adr/ADR-003-den-can-dau.md and CHANGELOG.md:
 // - contract v1.1 -> v1.2; night 1 lasts 240 s (was 300 s).
+// Ticket-04 (contract v1.3): manifest test now expects '1.3' (only the version changed; tuning still must equal core).
 // - per deposited mote +5 (was +10); a lit lantern now accepts motes as fuel (was "lights only once").
 // - "win as soon as all lanterns are lit" is removed: win only at dawn with >= 3/5 lit.
 import { test } from 'node:test';
@@ -12,9 +13,9 @@ import { createGame, idle, step, snapshot, tuning } from '../src/core.ts';
 const empty = { random_motes: false, random_shades: false };
 const close = (a: number, b: number, eps = 1e-9) => assert.ok(Math.abs(a - b) <= eps, `${a} != ${b}`);
 
-test('manifest tuning matches actual core and contract is v1.2', () => {
+test('manifest tuning matches actual core and contract is v1.3', () => {
   const c = JSON.parse(readFileSync('game.contract.json', 'utf8'));
-  assert.equal(c.contract_version, '1.2'); assert.deepEqual(c.tuning, tuning);
+  assert.equal(c.contract_version, '1.3'); assert.deepEqual(c.tuning, tuning);
 });
 test('60 ticks move six meters, snapshot0 before inputs', () => {
   const g = createGame(1, empty); assert.equal(snapshot(g).tick, 0);

@@ -1,7 +1,8 @@
-# Đảo Đèn Lồng — Phase 3 (Ticket-03 "Đèn cạn dầu", Contract v1.2)
+# Đảo Đèn Lồng — v1.0.0 (Phase 4, Ticket-04 "Bình minh", Contract v1.3)
 
 Ba Đêm: **Đảo Bến → Đảo Cau → Đảo Chuông**. Phase 3 thêm dầu đèn: đèn sáng cạn dần, Bóng Mực hút dầu đèn yếu, thắng khi đủ 60% đèn còn sáng lúc bình minh. Túi đom đóm lớn dần theo số lần thắp. Có chế độ mù màu.
-Yêu cầu gốc: [../phase3.txt](../phase3.txt) (Phase 3, thay một số luật cũ), [../phase2.txt](../phase2.txt), [../phase1.txt](../phase1.txt). Spec + acceptance criteria: [../docs/08-PHASE-3-SPEC.md](../docs/08-PHASE-3-SPEC.md) (Phase 2: [../docs/07-PHASE-2-SPEC.md](../docs/07-PHASE-2-SPEC.md)).
+Phase 4 không đổi luật: thêm benchmark, soak test, bảng xếp hạng, dễ tiếp cận và bản desktop Electron ([../docs/09-PHASE-4-SPEC.md](../docs/09-PHASE-4-SPEC.md)).
+Yêu cầu gốc: [../phase4.txt](../phase4.txt), [../phase3.txt](../phase3.txt) (Phase 3, thay một số luật cũ), [../phase2.txt](../phase2.txt), [../phase1.txt](../phase1.txt). Spec + acceptance criteria: [../docs/08-PHASE-3-SPEC.md](../docs/08-PHASE-3-SPEC.md) (Phase 2: [../docs/07-PHASE-2-SPEC.md](../docs/07-PHASE-2-SPEC.md)).
 Quyết định thiết kế: [../docs/adr/ADR-003-den-can-dau.md](../docs/adr/ADR-003-den-can-dau.md). Thay đổi phá vỡ tương thích: [../CHANGELOG.md](../CHANGELOG.md).
 
 ## Cài và chạy (từ gốc repo)
@@ -13,12 +14,19 @@ npm test             # node:test qua tsx — Phase 1 regression + Phase 2 + Phas
 npm run build        # dist/
 npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl
 npm run evidence:phase3   # tests + build + scenario headless → docs/proof/phase-3/<timestamp>/
+npm start                 # bản desktop (Electron) — bảng xếp hạng lưu trên đĩa
+npm run --silent bench -- --seed 42 --duration 30 --out bench.json
+npm run --silent soak -- --seed 7 --nights 10 --out soak.json
+npm start -- --export-leaderboard out.json
+npm run evidence:phase4   # tests + build + headless v1.2 ≡ v1.3 + soak → docs/proof/phase-4/<timestamp>/
 ```
 
 Headless nhận `--night 1|2|3`, `--scenario`, `--inputs`, `--snapshot-every`. Không render, không DOM, không wall clock.
 `npm run evidence:phase2` vẫn còn để làm lịch sử, nhưng oracle của nó dùng luật Ticket-02 (đêm 300/330/360 s, thắng khi đủ đèn), nên sẽ FAIL với luật v1.2. Đó là thay đổi có chủ ý, xem CHANGELOG.
 
 ## Điều khiển
+
+Phím mặc định dưới đây đổi được trong **Cài đặt → Đổi phím** (2 phím mỗi hành động, báo trùng, "Khôi phục mặc định"; lưu cùng cài đặt).
 
 | Phím | Tác dụng |
 |---|---|
@@ -32,7 +40,7 @@ Headless nhận `--night 1|2|3`, `--scenario`, `--inputs`, `--snapshot-every`. K
 | F3 | Hiện FPS |
 | Enter | Nút chính trên màn hình menu / kết quả |
 
-Cửa sổ mất focus thì game tự tạm dừng. Cài đặt lưu ở `localStorage`, khóa `dao-den-long.settings.v1`: âm lượng tổng / nhạc / hiệu ứng, độ nhạy chuột, hiện FPS, **chế độ mù màu**.
+Cửa sổ mất focus thì game tự tạm dừng. Cài đặt lưu ở `localStorage`, khóa `dao-den-long.settings.v1`: âm lượng tổng / nhạc / hiệu ứng, độ nhạy chuột, hiện FPS, **chế độ mù màu**, phụ đề, giảm chuyển động, chữ lớn ×1.25, bảng phím.
 
 ## Kiến trúc
 
@@ -99,6 +107,19 @@ Tổng điểm hành trình = tổng điểm các Đêm đã thắng. Dựng sce
 - **Đèn trùng khoảng cách:** chọn id nhỏ hơn theo so sánh chuỗi tự nhiên (L2 < L10).
 - **Web:** seed mỗi Đêm = `1000×night + 17×lượt_chơi_lại + 3` (headless dùng `--seed`). Ánh sáng môi trường `0.15 + 0.55 × đèn_sáng/tổng` được làm mượt khi hiển thị; giá trị đích đúng công thức (`__ddl.ambient`). Nhấp nháy 1 Hz khi dầu < 30: sáng 0.5 s, tắt 0.5 s.
 
+## Giả định Phase 4
+
+- **Bench, cảnh chuẩn:** `benchScenario(42)` trong core. 200 Bóng rải đều trên mặt đảo Đêm 1 theo xoắn ốc hướng dương (Vogel) với góc xoay và nhiễu nhỏ lấy từ RNG theo seed, bỏ điểm nằm trong vùng an toàn của L1–L3; 100 đom đóm ở điểm ngẫu nhiên đều trên đảo, cách nhau ≥ 0.8 m. Scenario có khóa mở rộng `bench: true` (mặc định tắt, gameplay không dùng) để tắt sinh thêm, sát thương, nhặt, hao dầu, hút dầu, gió và kết thúc Đêm. Bóng vẫn `wander` theo luật thường nhưng không chuyển `chase` (yêu cầu ghi "200 Bóng ở trạng thái wander").
+- **Bench, hiển thị:** HUD vẫn hiện như lúc chơi; phụ đề, mũi tên và giảm chuyển động không đổi hình ảnh đo (không có sự kiện sinh Bóng). Sáng tạo chỉ ở lớp hình ảnh nên vẫn chạy, không thêm thực thể.
+- **Bench, số đo:** `dt` là khoảng giữa hai `requestAnimationFrame` liên tiếp sau 3 s khởi động. `load_ms` = thời điểm khung đầu tiên của cảnh bench (`performance.timeOrigin + now`) trừ thời điểm tiến trình Electron chính bắt đầu (`Date.now() − process.uptime()`), nên gồm khởi động Electron, tải trang và dựng cảnh, không gồm `npm run build` chạy trước đó. `peak_mem_mb` = đỉnh tổng working set (RSS trên Windows) của mọi tiến trình Electron (main, GPU, renderer), lấy mẫu 250 ms.
+- **Bench, GPU:** Electron chạy với `force_high_performance_gpu` để laptop đồ họa lai dùng GPU rời. GPU thực dùng ghi trong `bench.json → renderer.gpu`. Trên máy làm bài, GPU tích hợp Intel UHD 630 đạt avg ≈ 115 nhưng 1% low ≈ 20 (FAIL ngưỡng 30); GTX 1650 đạt PASS (số trong `bench.json`).
+- **Bench, vsync:** tắt bằng `--disable-gpu-vsync --disable-frame-rate-limit`, cửa sổ 1280×720 nội dung, `force-device-scale-factor 1`.
+- **Soak:** Đêm thứ i (1-based) seed `7 + i`, Đêm `((i−1) mod 3) + 1`; chạy tới khi kết thúc hoặc `duration·60 + 1` tick. Chạy với `node --expose-gc --max-semi-space-size=1`, đo RSS sau `gc()` để số phản ánh bộ nhớ giữ lại chứ không phải heap trẻ đang lớn. Lỗi trong một Đêm được bắt và tính là `crash`, soak vẫn chạy tiếp.
+- **Bảng xếp hạng:** `score` = tổng điểm các Đêm **đã thắng** trong lượt chơi (chơi thử một Đêm: điểm Đêm đó nếu thắng, 0 nếu thua). `nights_won` = số Đêm đã thắng trong lượt. `seed` = seed của Đêm cuối của lượt (web dùng `1000×night + 17×lần_chơi_lại + 3`). `achieved_at` theo giờ máy, dạng `2026-11-20T23:05:12+07:00`. Form hiện một lần mỗi lượt, kể cả khi điểm 0; không nhập thì chỉ cần bấm Chơi lại / Về menu. Danh sách luôn cắt còn top 10 nên điểm thấp hơn hạng 10 không được giữ. Tên chuẩn hóa NFC, cho phép chữ Việt có dấu. Bằng điểm: `achieved_at` sớm hơn đứng trên; vẫn bằng thì giữ thứ tự lưu.
+- **Đổi phím:** chuột vẫn xoay/zoom camera; F3 (FPS) và Enter (nút chính) không đổi được. Delete/Backspace khi đang gán thì xóa phím phụ.
+- **Phụ đề:** tối đa 3 dòng cùng lúc, mỗi dòng 3.2–4 s, tắt được trong Cài đặt. "Gió sắp thổi" hiện khi core bật `wind.warning` (2 s trước mỗi đợt gió Đêm 3). "10 s cuối" là đồng hồ đếm lớn giữa màn hình. Đèn dầu < 30 báo mỗi lần tụt xuống dưới ngưỡng. Bóng xuất hiện kèm khoảng cách, mũi tên mép màn hình chỉ Bóng mới sinh trong 4 s. Thêm phụ đề cho đèn tắt và Gió Lạc cướp.
+- **Hiển thị:** Bóng và đom đóm vẽ bằng instancing; mắt Bóng co giãn theo Y/Z (khoảng cách hai mắt giữ nguyên) thay vì cả ba trục như Phase 3.
+
 ## Chế độ mù màu (web)
 
 - Viền và mắt Bóng Mực: #7A3CFF → #00B3FF. Sợi "hút dầu" nối Bóng với đèn dùng cùng màu.
@@ -107,7 +128,7 @@ Tổng điểm hành trình = tổng điểm các Đêm đã thắng. Dựng sce
 
 ## Debug hook (chỉ web, để kiểm thử tự động)
 
-`window.__ddl`: `game`, `mode`, `fps`, `ambient`, `bench(n)` (render n frame đồng bộ GPU, trả FPS), `advance(n)` (chạy n tick qua đúng đường input web), `key(code, down)`, `colorblind(on)` (bật/tắt như ô trong Cài đặt).
+`window.__ddl`: `game`, `mode`, `fps`, `ambient`, `benchResult` (khi mở `?bench=1`), `bench(n)` (render n frame đồng bộ GPU, trả FPS), `advance(n)` (chạy n tick qua đúng đường input web), `key(code, down)`, `colorblind(on)` (bật/tắt như ô trong Cài đặt).
 
 ## Sáng tạo của tôi
 
@@ -120,4 +141,5 @@ Tổng điểm hành trình = tổng điểm các Đêm đã thắng. Dựng sce
 
 ## Trạng thái kiểm chứng
 
+Phase 4: [../docs/verification/phase-4.md](../docs/verification/phase-4.md). 
 Xem [../docs/verification/phase-3.md](../docs/verification/phase-3.md) và `docs/proof/phase-3/`. Không có bằng chứng nào được ghi nếu lệnh chưa thực sự chạy.

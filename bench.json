@@ -1,0 +1,55 @@
+{
+  "contract_version": "1.3",
+  "seed": 42,
+  "duration_s": 30,
+  "warmup_s": 3,
+  "frames": 6640,
+  "avg_fps": 221.2,
+  "p1_low_fps": 87.6,
+  "frame_ms_p95": 6.8,
+  "worst_frames_ms": [
+    26.4,
+    24.9,
+    24.7,
+    21.8,
+    18.8,
+    18.5,
+    18.2,
+    17.8,
+    15.6,
+    15.1
+  ],
+  "spikes_over_33ms": 0,
+  "load_ms": 1051,
+  "peak_mem_mb": 467.8,
+  "vsync_off": true,
+  "resolution": "1280x720",
+  "renderer": {
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 (0x00001F91) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "api": "WebGL2",
+    "three": "r180",
+    "electron": "37.10.3",
+    "chromium": "138.0.7204.251",
+    "pixel_ratio": 1,
+    "viewport": [
+      1280,
+      720
+    ]
+  },
+  "os": {
+    "type": "Windows_NT",
+    "release": "10.0.26200",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz",
+    "cores": 12,
+    "ram_gb": 15.8
+  },
+  "thresholds": {
+    "avg_fps_min": 60,
+    "p1_low_fps_min": 30,
+    "load_ms_max": 10000
+  },
+  "note": "Scene: Night 1, 200 wander shades + 100 motes, L1–L3 lit (fuel 100); spawns, damage, pickups, fuel decay and night end disabled; camera orbits r 30 m, y 15 m, 15 s/lap. load_ms = process start → first rendered frame. peak_mem_mb = max sum of working sets over all Electron processes.",
+  "pass": true
+}

@@ -1,5 +1,33 @@
 # Changelog — Đảo Đèn Lồng
 
+## [1.0.0] Phase 4 — Contract v1.3 — Ticket-04 "Bình minh: phát hành v1.0.0" (2026-11-20)
+
+Spec: [docs/09-PHASE-4-SPEC.md](docs/09-PHASE-4-SPEC.md). Retro: [docs/RETRO.md](docs/RETRO.md).
+
+### Không phá vỡ tương thích
+
+Luật, tuning và đầu ra headless giữ nguyên v1.2 (cùng input → JSONL giống từng byte). Chỉ đổi `contract_version` và thêm khóa lệnh.
+
+| # | Trước (v1.2) | Sau (v1.3) |
+|---|---|---|
+| C1 | `contract_version: "1.2"` | `"1.3"` |
+| C2 | — | `run_cmd: "npm start --"`, `bench_cmd: "npm run --silent bench --"`, `soak_cmd: "npm run --silent soak --"` |
+
+### Thêm
+
+- **Benchmark** (`npm run bench`, Electron 37): cảnh chuẩn 200 Bóng `wander` + 100 đom đóm, L1–L3 sáng, camera bay vòng r 30 m, vsync tắt, 3 s khởi động, ghi `bench.json` rồi thoát 0. Core có cờ `bench` (mặc định tắt) chặn sinh thêm, sát thương, nhặt, hao dầu và kết thúc Đêm.
+- **Soak** (`npm run soak`): 10 Đêm trong một tiến trình, input ngẫu nhiên theo seed, ghi `soak.json`.
+- **Bảng xếp hạng cục bộ:** form nhập tên sau khi thua / sau Bình Minh, top 10, màn hình từ menu, lưu ở `userData/leaderboard.json` (Electron) hoặc `localStorage` (web), lệnh `npm start -- --export-leaderboard out.json`.
+- **Dễ tiếp cận:** đổi phím (2 phím mỗi hành động, báo trùng, khôi phục mặc định), phụ đề (`aria-live`) cho Bóng xuất hiện / gió / 10 s cuối / đèn yếu, mũi tên mép màn hình chỉ Bóng mới, đếm ngược 10 s, giảm chuyển động (mặc định theo `prefers-reduced-motion`), chữ tối thiểu 18 px và chữ lớn ×1.25.
+- **Hiệu năng web:** Bóng Mực và đom đóm vẽ bằng GPU instancing (một draw call mỗi phần cho mọi Bóng). Hình dạng và màu giữ nguyên; mắt Bóng co theo trục Y/Z thay vì cả 3 trục.
+- **Đóng gói:** `npm start` (desktop), `npm run serve` (web tĩnh qua `scripts/serve-dist.mjs`, không phụ thuộc), LICENSE (MIT cho code của bài), CREDITS, README phát hành.
+- **Harness:** `npm run evidence:phase4` (`scripts/evidence-phase4.mjs`), skill verify-game cập nhật cho v1.3.
+
+### Test
+
+- Đổi: `game/tests/core.test.ts` `manifest … v1.2` → `… v1.3` (lý do C1, comment trong file).
+- Mới: `game/tests/phase4.test.ts` (9 test). Mọi test Phase 1–3 còn lại không đổi.
+
 ## [Phase 3] Contract v1.2 — Ticket-03 "Đèn cạn dầu" (2026-11-20)
 
 Quyết định thiết kế: [docs/adr/ADR-003-den-can-dau.md](docs/adr/ADR-003-den-can-dau.md). Spec: [docs/08-PHASE-3-SPEC.md](docs/08-PHASE-3-SPEC.md).
@@ -72,8 +100,17 @@ Các test Phase 1–2 còn lại không đổi và vẫn đạt. Mới: `game/te
 
 ## [Phase 2] Contract v1.1 — Ticket-02 "Ba hòn đảo"
 
-Commit `c87bf44`: ba Đêm, Gió Lạc, Bùa Gió, gió mạnh Đêm 3, tạm dừng, cài đặt, âm thanh. Xem [docs/07-PHASE-2-SPEC.md](docs/07-PHASE-2-SPEC.md).
+Commit `c87bf44`. Spec và acceptance criteria: [docs/07-PHASE-2-SPEC.md](docs/07-PHASE-2-SPEC.md).
 
-## [Phase 1] Contract v1.0
+- Ba Đêm qua `--night 1|2|3`: Đảo Bến, Đảo Cau, Đảo Chuông; Đêm 3 có gió mạnh đẩy Mây.
+- Gió Lạc (id `D*`) cướp đom đóm (`drifter_steal`, `drifter_drop`); Bùa Gió (`charm_picked`, chạy 7.2 m/s, lướt không hồi chiêu).
+- Contract v1.1. Các test Phase 1 bị luật mới thay được sửa kèm comment lý do trong `game/tests`.
+- Web: menu, tạm dừng, cài đặt lưu `localStorage`, âm thanh tổng hợp, HUD mới, màn Bình Minh.
 
-Gameplay cơ bản một Đêm. Xem [docs/02-SPEC.md](docs/02-SPEC.md).
+## [Phase 1] Contract v1.0 — PRD-0
+
+Commit `592e19d`. Spec: [docs/02-SPEC.md](docs/02-SPEC.md).
+
+- Một Đêm trên một đảo: Mây chạy, nhảy, lướt, nhặt đom đóm, nạp để thắp Đèn Lồng, Tỏa Sáng làm choáng Bóng Mực, bị chạm thì rơi đom đóm.
+- Core thuần TypeScript, 60 tick/s, tất định theo seed; headless JSONL; `game.contract.json` v1.0.
+- Web Three.js góc nhìn thứ ba, model low-poly tự dựng, nón lá treo đèn.

@@ -6,3 +6,4 @@ dist/
 output.jsonl
 *.tsbuildinfo
 /docs/demo/demo.mp4
+/release/

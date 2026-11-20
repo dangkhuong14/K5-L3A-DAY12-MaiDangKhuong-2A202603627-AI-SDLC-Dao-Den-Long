@@ -1,7 +1,9 @@
 // Browser layer: Three.js rendering, DOM HUD/menus, input and audio. All rules live in core.ts.
 import * as T from 'three';
-import { createGame, step, idle, tuning, rules, nights, capacity, hasSafeZone, isWeak, litNeeded, FU, type Game, type NightId, type Event, type Input, type NightDef, type Lantern } from './core.ts';
-import { keyboardMove } from './keyboard.ts';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { createGame, step, idle, tuning, rules, nights, capacity, hasSafeZone, isWeak, litNeeded, FU, benchScenario, benchCamera, type Game, type NightId, type Event, type Input, type NightDef, type Lantern } from './core.ts';
+import { keyboardMove, actionDown, conflicts, loadBindings, keyName, ACTIONS, ACTION_LABEL, DEFAULT_BINDINGS, type Action, type Bindings } from './keyboard.ts';
+import { insertEntry, parseEntries, nameError, normalizeName, isoLocal, type Entry } from './leaderboard.ts';
 import { Sound } from './audio.ts';
 import './style.css';
 
@@ -14,11 +16,12 @@ const C = {
 };
 
 // ---------- Settings (persisted) ----------
-type Settings = { master: number; music: number; sfx: number; sens: number; fps: boolean; cb: boolean };
+type Settings = { master: number; music: number; sfx: number; sens: number; fps: boolean; cb: boolean; reduce: boolean; big: boolean; subs: boolean; bindings: Bindings };
 const SKEY = 'dao-den-long.settings.v1';
 const settings: Settings = (() => {
-  const d: Settings = { master: 0.8, music: 0.5, sfx: 0.8, sens: 1, fps: false, cb: false };
-  try { return { ...d, ...JSON.parse(localStorage.getItem(SKEY) ?? '{}') }; } catch { return d; }
+  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const d: Settings = { master: 0.8, music: 0.5, sfx: 0.8, sens: 1, fps: false, cb: false, reduce, big: false, subs: true, bindings: structuredClone(DEFAULT_BINDINGS) };
+  try { const raw = JSON.parse(localStorage.getItem(SKEY) ?? '{}'); return { ...d, ...raw, bindings: loadBindings(raw.bindings) }; } catch { return d; }
 })();
 const saveSettings = () => { localStorage.setItem(SKEY, JSON.stringify(settings)); sound.setVolumes(settings.master, settings.music, settings.sfx); };
 const sound = new Sound(); sound.setVolumes(settings.master, settings.music, settings.sfx);
@@ -26,6 +29,12 @@ const sound = new Sound(); sound.setVolumes(settings.master, settings.music, set
 const shadeLine = () => settings.cb ? 0x00B3FF : C.outline;
 const applyCb = () => document.body.classList.toggle('cb', settings.cb);
 applyCb();
+// Ticket-04 accessibility: large text (x1.25) and reduced motion (no camera shake, no screen flash) as body classes.
+const applyA11y = () => { document.body.classList.toggle('big', settings.big); document.body.classList.toggle('reduce', settings.reduce); };
+applyA11y();
+const K = (a: Action) => keyName(settings.bindings[a][0]);
+/** Compact key label for the round cooldown badges. */
+const Kshort = (a: Action) => { const c = settings.bindings[a][0] ?? ''; return /^Shift/.test(c) ? '⇧' : /^Control/.test(c) ? 'Ctrl' : /^Alt/.test(c) ? 'Alt' : keyName(c).slice(0, 5); };
 
 // ---------- Story ----------
 const STORY: Record<NightId, { title: string; lines: string[] }> = {
@@ -45,12 +54,15 @@ document.querySelector('#app')!.innerHTML = `
   <div id="prompt" class="hidden"></div>
   <div id="toasts"></div>
   <div id="windwarn" class="hidden">🍃 Gió lớn sắp thổi!</div>
+  <div id="countdown" class="hidden"></div>
+  <div id="captions" aria-live="polite"></div>
+  <div id="shadearrows"></div>
   <div class="hud-bc"><div id="motebar"></div><div id="carrytext"></div></div>
   <div class="hud-br">
-    <div class="cd" id="cd-dash"><div class="ring"></div><b>⇧</b><span>Lướt</span></div>
-    <div class="cd" id="cd-pulse"><div class="ring"></div><b>Q</b><span>Tỏa Sáng</span></div>
+    <div class="cd" id="cd-dash"><div class="ring"></div><b id="k-dash">⇧</b><span>Lướt</span></div>
+    <div class="cd" id="cd-pulse"><div class="ring"></div><b id="k-pulse">Q</b><span>Tỏa Sáng</span></div>
   </div>
-  <div class="hud-bl"><kbd>WASD</kbd> chạy · <kbd>Space</kbd> nhảy · <kbd>Shift</kbd> lướt · <kbd>E</kbd> thắp / châm dầu · <kbd>Q</kbd> tỏa sáng · kéo chuột xoay · <kbd>Esc</kbd>/<kbd>P</kbd> tạm dừng</div>
+  <div class="hud-bl" id="help"></div>
   <div id="arrow" class="hidden"><div class="tip"></div><span></span></div>
   <div id="flash"></div>
 </div>
@@ -58,6 +70,19 @@ document.querySelector('#app')!.innerHTML = `
 <div id="screen"></div>`;
 const $ = (id: string) => document.getElementById(id)!;
 for (let i = 0; i < tuning.capacity_max; i++) $('motebar').insertAdjacentHTML('beforeend', '<i></i>');
+const moveKeys = () => [K('up'), K('left'), K('down'), K('right')].join('');
+function renderHints() {
+  $('help').innerHTML = `<kbd>${moveKeys()}</kbd> chạy · <kbd>${K('jump')}</kbd> nhảy · <kbd>${K('dash')}</kbd> lướt · <kbd>${K('interact')}</kbd> thắp / châm dầu · <kbd>${K('pulse')}</kbd> tỏa sáng · kéo chuột xoay · <kbd>${K('pause')}</kbd> tạm dừng`;
+  $('k-dash').textContent = Kshort('dash'); $('k-pulse').textContent = Kshort('pulse');
+}
+renderHints();
+/** Ticket-04 subtitles / visual cues: short captions for audio-only or easy-to-miss events (toggle "Phụ đề & chỉ báo"). */
+function caption(text: string, cls = '', ms = 3200) {
+  if (!settings.subs) return;
+  const box = $('captions'); const d = document.createElement('div'); d.className = 'cap ' + cls; d.textContent = text; box.append(d);
+  while (box.children.length > 3) box.firstElementChild!.remove();
+  setTimeout(() => d.remove(), ms);
+}
 
 // ---------- Renderer & scene ----------
 const renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -231,25 +256,46 @@ function makeLamp(pos: number[]): LampView {
   const flap = mesh(new T.PlaneGeometry(0.18, 0.3), lambert(0x8a8478, { side: T.DoubleSide }), torn, 0.12, -0.32, 0.4); flap.rotation.set(0.5, 0, 0.4);
   return { g, shade, core, light, ring, progress, dep: 0, bar, fill, torn };
 }
-type ShadeView = { g: T.Group; body: T.Mesh; outline: T.Mesh; eyes: T.Mesh[]; stars: T.Group; born: number; aura: T.Sprite; tether: T.Mesh };
+type ShadeView = { g: T.Group; stars: T.Group; born: number; tether: T.Mesh };
 const tetherGeo = new T.CylinderGeometry(0.05, 0.12, 1, 6, 1, true); tetherGeo.translate(0, 0.5, 0); tetherGeo.rotateX(Math.PI / 2);
 const shadeViews = new Map<string, ShadeView>();
+// Ticket-04 perf (200-shade benchmark): shades and motes are drawn with GPU instancing — one draw call per part for ALL
+// shades (hull = body+tail, outline, eyes, aura billboard) and one for all motes — instead of ~10 meshes per shade.
+// Shapes, colours and animation are unchanged; per-shade colour (normal / stunned / colour-blind) is an instance colour.
 const shadeBodyGeo = new T.SphereGeometry(0.6, 16, 12), shadeTailGeo = new T.ConeGeometry(0.55, 1.0, 12);
+const part = (geo: T.BufferGeometry, sx: number, sy: number, sz: number, y: number, flip: boolean) => {
+  const g = geo.clone(); if (flip) g.rotateX(Math.PI); g.scale(sx, sy, sz); g.translate(0, y, 0); return g;
+};
+const INST_MAX = 256;
+const instanced = (geo: T.BufferGeometry, mat: T.Material) => {
+  const m = new T.InstancedMesh(geo, mat, INST_MAX); m.frustumCulled = false; m.count = 0;
+  m.instanceMatrix.setUsage(T.DynamicDrawUsage); m.setColorAt(0, new T.Color(1, 1, 1)); m.instanceColor!.setUsage(T.DynamicDrawUsage);
+  scene.add(m); return m;
+};
+const glowMat = (map: T.Texture) => new T.MeshBasicMaterial({ map, transparent: true, blending: T.AdditiveBlending, depthWrite: false });
+const billboardGeo = new T.PlaneGeometry(1, 1);
+const shadeInst = {
+  hull: instanced(mergeGeometries([part(shadeBodyGeo, 1, 1.15, 1, 1.1, false), part(shadeTailGeo, 1, 1, 1, 0.45, true)])!, new T.MeshBasicMaterial()),
+  outline: instanced(mergeGeometries([part(shadeBodyGeo, 1.1, 1.27, 1.1, 1.1, false), part(shadeTailGeo, 1.1, 1.1, 1.1, 0.45, true)])!, new T.MeshBasicMaterial({ side: T.BackSide })),
+  eyes: instanced(mergeGeometries([-0.2, 0.2].map(x => new T.SphereGeometry(0.09, 8, 6).translate(x, 0, 0)))!, new T.MeshBasicMaterial()),
+  aura: instanced(billboardGeo, glowMat(violetTex))
+};
+const moteInst = instanced(billboardGeo, glowMat(moteTex));
+const starGeo = new T.OctahedronGeometry(0.1), starMat = new T.MeshBasicMaterial({ color: C.gold });
+const _m = new T.Matrix4(), _m2 = new T.Matrix4(), _c = new T.Color(), _v = new T.Vector3(), _s = new T.Vector3();
+/** Billboard (camera-facing, like a Sprite) instance at world position with uniform size; colour = rgb × opacity (additive). */
+function setBillboard(im: T.InstancedMesh, i: number, pos: T.Vector3, size: number, hex: number, opacity: number) {
+  im.setMatrixAt(i, _m.compose(pos, camera.quaternion, _s.set(size, size, size)));
+  im.setColorAt(i, _c.setHex(hex).multiplyScalar(opacity));
+}
+function finishInstances(im: T.InstancedMesh, n: number) { im.count = n; im.instanceMatrix.needsUpdate = true; im.instanceColor!.needsUpdate = true; }
 function makeShade(): ShadeView {
-  const g = new T.Group(); world.add(g);
-  const bodyMat = new T.MeshBasicMaterial({ color: C.shade }), outMat = new T.MeshBasicMaterial({ color: C.outline, side: T.BackSide });
-  const body = mesh(shadeBodyGeo, bodyMat, g, 0, 1.1); body.scale.set(1, 1.15, 1);
-  const tail = mesh(shadeTailGeo, bodyMat, g, 0, 0.45); tail.rotation.x = Math.PI;
-  const outline = mesh(shadeBodyGeo, outMat, g, 0, 1.1); outline.scale.set(1.1, 1.27, 1.1);
-  const o2 = mesh(shadeTailGeo, outMat, g, 0, 0.45); o2.rotation.x = Math.PI; o2.scale.setScalar(1.1);
-  const eyeMat = new T.MeshBasicMaterial({ color: shadeLine() });
-  const eyes = [-0.2, 0.2].map(x => mesh(new T.SphereGeometry(0.09, 8, 6), eyeMat, g, x, 1.25, 0.5));
-  const stars = new T.Group(); add(stars, g, 0, 2.0);
-  for (let i = 0; i < 3; i++) { const s = mesh(new T.OctahedronGeometry(0.1), new T.MeshBasicMaterial({ color: C.gold }), stars, Math.cos(i * 2.09) * 0.45, 0, Math.sin(i * 2.09) * 0.45); s.userData.i = i; }
-  const aura = sprite(violetTex, 3, 0.35); add(aura, g, 0, 1);
+  const g = new T.Group(); world.add(g); // transform holder (+ stun stars); the body itself is instanced
+  const stars = new T.Group(); add(stars, g, 0, 2.0); stars.visible = false;
+  for (let i = 0; i < 3; i++) { const s = mesh(starGeo, starMat, stars, Math.cos(i * 2.09) * 0.45, 0, Math.sin(i * 2.09) * 0.45); s.userData.i = i; }
   // Drain tether: a glowing thread from the shade to the lantern it is drinking from.
   const tether = mesh(tetherGeo, new T.MeshBasicMaterial({ color: C.outline, transparent: true, opacity: 0.7, depthWrite: false }), world); tether.visible = false;
-  return { g, body, outline, eyes, stars, born: -1, aura, tether };
+  return { g, stars, born: -1, tether };
 }
 type DrifterView = { g: T.Group; ribbons: T.Mesh[]; loot: T.Sprite[] };
 const drifterViews = new Map<string, DrifterView>();
@@ -273,7 +319,6 @@ function makeCharm(pos: number[]) {
   const base = mesh(new T.RingGeometry(0.6, 0.75, 24), new T.MeshBasicMaterial({ color: C.scarf, transparent: true, opacity: 0.6, side: T.DoubleSide }), g, 0, 0.05); base.rotation.x = -Math.PI / 2;
   return g;
 }
-const moteViews = new Map<string, T.Sprite>();
 const pads: T.Group[] = [];
 
 // Effects: pulse wave, sparkle bursts, wind leaves.
@@ -297,9 +342,13 @@ const leafColors = [0xa8c47a, 0xd9a441, 0x7fb069, 0xc96f3b];
 leafSeeds.forEach((_, i) => leaves.setColorAt(i, new T.Color(leafColors[i % 4])));
 
 // ---------- Game state (web) ----------
-type Mode = 'menu' | 'intro' | 'play' | 'paused' | 'ending' | 'result' | 'dawn';
+type Mode = 'menu' | 'intro' | 'play' | 'paused' | 'ending' | 'result' | 'dawn' | 'bench';
 let mode: Mode = 'menu', game: Game = createGame(1, {}, 1), night: NightId = 1;
-let campaign = { total: 0, scores: [] as number[], attempts: 0 };
+let campaign = { total: 0, scores: [] as number[], attempts: 0, saved: false };
+let currentSeed = 7;
+const newCampaign = () => ({ total: 0, scores: [] as number[], attempts: 0, saved: false });
+const shadeCues = new Map<string, number>(); // shade id -> performance.now() until which its spawn arrow shows
+let weakSeen = new Set<string>();
 const keys = new Set<string>(); let pauseQueue = 0, pauseLatch = false;
 let yaw = 0, pitch = 0.42, dist = 12, acc = 0, last = performance.now(), endAt = 0, shake = 0;
 let lastCount = -1, windWarned = false, ambient = 0.15, scoreBefore = 0, lastCap = tuning.carry_capacity;
@@ -316,14 +365,14 @@ const fpsStats = { frames: 0, since: performance.now(), fps: 0, samples: [] as n
 
 function clearWorld() {
   scene.remove(world);
-  world.traverse(o => { const m = o as T.Mesh; if (m.geometry && m.geometry !== shadeBodyGeo && m.geometry !== shadeTailGeo) m.geometry.dispose(); });
+  world.traverse(o => { const m = o as T.Mesh; if (m.geometry && m.geometry !== tetherGeo && m.geometry !== starGeo) m.geometry.dispose(); });
   world = new T.Group(); scene.add(world);
   lamps.clear(); shadeViews.clear(); drifterViews.clear(); charmViews.clear(); pads.length = 0;
-  for (const s of moteViews.values()) scene.remove(s); moteViews.clear();
+  moteInst.count = 0; for (const im of Object.values(shadeInst)) im.count = 0;
 }
-function loadNight(n: NightId, seed: number) {
-  lastCap = tuning.carry_capacity; drainToast.clear();
-  night = n; game = createGame(seed, {}, n); clearWorld(); buildTerrain(game.def);
+function loadNight(n: NightId, seed: number, scenario: object = {}) {
+  lastCap = tuning.carry_capacity; drainToast.clear(); shadeCues.clear(); weakSeen = new Set(); currentSeed = seed;
+  night = n; game = createGame(seed, scenario, n); clearWorld(); buildTerrain(game.def);
   for (const l of game.lanterns) lamps.set(l.id, makeLamp(l.pos));
   for (const c of game.charms) charmViews.set(c.id, makeCharm(c.pos));
   yaw = 0; lastCount = -1; windWarned = false; acc = 0; keys.clear(); pauseQueue = 0; pauseLatch = false;
@@ -335,7 +384,7 @@ function loadNight(n: NightId, seed: number) {
 
 // ---------- Screens ----------
 const scr = $('screen');
-function show(html: string, cls = '') { scr.className = 'show ' + cls; scr.innerHTML = `<div class="card">${html}</div>`; }
+function show(html: string, cls = '') { scr.className = 'show ' + cls; scr.innerHTML = `<div class="card${/\bwide\b/.test(cls) ? ' wide' : ''}">${html}</div>`; }
 function hideScreen() { scr.className = ''; scr.innerHTML = ''; }
 const btn = (act: string, label: string, primary = false) => `<button data-act="${act}" class="${primary ? 'primary' : ''}">${label}</button>`;
 function menu() {
@@ -343,9 +392,9 @@ function menu() {
   loadNight(1, 7);
   show(`<div class="eyebrow">Một đốm sáng nhỏ · Ba hòn đảo thức giấc</div><h1>Đảo Đèn Lồng</h1>
     <p>Sương đen phủ kín quần đảo. Cùng Mây gom đom đóm, thắp lại đèn lồng qua ba đêm dài và đón bình minh trở về.</p>
-    <div class="row">${btn('start', 'Bắt đầu hành trình', true)}${btn('settings', 'Cài đặt')}</div>
+    <div class="row">${btn('start', 'Bắt đầu hành trình', true)}${btn('leaderboard', 'Bảng xếp hạng')}${btn('settings', 'Cài đặt')}</div>
     <div class="practice">Luyện tập: ${btn('practice-1', 'Đêm 1')}${btn('practice-2', 'Đêm 2')}${btn('practice-3', 'Đêm 3')}</div>
-    <div class="note">Bàn phím + chuột · WASD chạy · Space nhảy · Shift lướt · E nạp đèn · Q tỏa sáng · Esc/P tạm dừng</div>`, 'menu');
+    <div class="note">Bàn phím + chuột · ${moveKeys()} chạy · ${K('jump')} nhảy · ${K('dash')} lướt · ${K('interact')} nạp đèn · ${K('pulse')} tỏa sáng · ${K('pause')} tạm dừng</div>`, 'menu');
 }
 function intro(n: NightId) {
   mode = 'intro'; loadNight(n, 1000 * n + campaign.attempts * 17 + 3); $('hud').classList.add('hidden');
@@ -369,9 +418,62 @@ function settingsScreen(back: () => void) {
     `<label><span>${label}</span><input type="range" data-set="${k}" min="${min}" max="${max}" step="${stepv}" value="${settings[k]}"><output>${Math.round(Number(settings[k]) * 100)}%</output></label>`;
   show(`<h2>Cài đặt</h2><div class="settings">${slider('master', 'Âm lượng tổng', 0, 1, 0.05)}${slider('music', 'Nhạc nền', 0, 1, 0.05)}${slider('sfx', 'Hiệu ứng', 0, 1, 0.05)}${slider('sens', 'Độ nhạy chuột', 0.2, 3, 0.1)}
     <label class="check"><input type="checkbox" data-set="fps" ${settings.fps ? 'checked' : ''}><span>Hiện FPS</span></label>
-    <label class="check"><input type="checkbox" data-set="cb" ${settings.cb ? 'checked' : ''}><span>Chế độ mù màu <small>(Bóng Mực xanh lam, cảnh báo trắng + ⚠)</small></span></label></div>
-    <div class="note">Tự động lưu trên trình duyệt này.</div><div class="row">${btn('settings-back', 'Xong', true)}</div>`, 'settings');
+    <label class="check"><input type="checkbox" data-set="cb" ${settings.cb ? 'checked' : ''}><span>Chế độ mù màu <small>(Bóng Mực xanh lam, cảnh báo trắng + ⚠)</small></span></label>
+    <label class="check"><input type="checkbox" data-set="subs" ${settings.subs ? 'checked' : ''}><span>Phụ đề &amp; chỉ báo hình ảnh <small>(Bóng xuất hiện + mũi tên, gió, 10 s cuối, đèn yếu)</small></span></label>
+    <label class="check"><input type="checkbox" data-set="reduce" ${settings.reduce ? 'checked' : ''}><span>Giảm chuyển động <small>(tắt rung camera và chớp màn hình)</small></span></label>
+    <label class="check"><input type="checkbox" data-set="big" ${settings.big ? 'checked' : ''}><span>Chữ lớn <small>(×1.25)</small></span></label></div>
+    <div class="note">Tự động lưu trên máy này.</div><div class="row">${btn('controls', 'Đổi phím')}${btn('settings-back', 'Xong', true)}</div>`, 'settings wide');
 }
+// ---------- Ticket-04: key rebinding ----------
+let capture: { action: Action; slot: number } | null = null, bindMsg = '';
+function controlsScreen() {
+  const dup = conflicts(settings.bindings), dupCodes = new Set(dup.map(d => d.code));
+  const rows = ACTIONS.map(a => `<span>${ACTION_LABEL[a]}</span>${[0, 1].map(i => {
+    const code = settings.bindings[a][i], wait = capture?.action === a && capture.slot === i;
+    return `<button data-act="bind-${a}-${i}" class="${wait ? 'wait' : code && dupCodes.has(code) ? 'dup' : ''}">${wait ? 'Nhấn phím…' : keyName(code)}</button>`;
+  }).join('')}`).join('');
+  const warn = dup.length ? `⚠ Trùng phím: ${dup.map(d => `${keyName(d.code)} → ${d.actions.map(a => ACTION_LABEL[a]).join(' và ')}`).join('; ')}. Hãy đổi một trong hai.` : '';
+  show(`<h2>Đổi phím</h2><p>Bấm vào ô rồi nhấn phím mới. Mỗi hành động có 2 phím. Delete/Backspace để xóa phím phụ.</p>
+    <div class="binds">${rows}</div><div class="bindmsg ${warn ? '' : 'ok'}" id="bindmsg">${warn || bindMsg}</div>
+    <div class="row">${btn('bind-reset', 'Khôi phục mặc định')}${btn('controls-back', 'Xong', true)}</div>`, 'settings wide');
+}
+function setBinding(code: string) {
+  if (!capture) return; const { action, slot } = capture; capture = null;
+  const list = [...settings.bindings[action]];
+  if ((code === 'Delete' || code === 'Backspace') && slot === 1) list.splice(1, 1);
+  else { list[slot] = code; if (slot === 1 && list[0] === code) list.splice(1, 1); }
+  settings.bindings[action] = list.filter(Boolean); saveSettings(); renderHints();
+  bindMsg = `Đã gán ${keyName(code)} cho "${ACTION_LABEL[action]}".`;
+  controlsScreen();
+}
+
+// ---------- Ticket-04: local leaderboard (Electron: userData/leaderboard.json via preload; web: localStorage) ----------
+const native = (window as any).ddlNative as undefined | { lbGet(): Promise<unknown>; lbSave(e: Entry[]): Promise<void>; benchFirstFrame(epochMs: number, info: object): void; benchDone(dts: number[]): void; electron?: string };
+const LBKEY = 'dao-den-long.leaderboard.v1';
+async function lbLoad(): Promise<Entry[]> {
+  try { return parseEntries(native ? await native.lbGet() : JSON.parse(localStorage.getItem(LBKEY) ?? '[]')); } catch { return []; }
+}
+async function lbStore(list: Entry[]) { if (native) await native.lbSave(list); else localStorage.setItem(LBKEY, JSON.stringify({ entries: list })); }
+const nightsWon = () => campaign.scores.filter(v => v !== undefined).length;
+function nameForm() {
+  if (campaign.saved) return '<p class="note">Đã lưu điểm vào Bảng xếp hạng.</p>';
+  return `<div class="eyebrow">Lưu điểm · ${campaign.total} điểm · thắng ${nightsWon()}/3 Đêm</div>
+    <form class="nameform" id="nameform"><input id="pname" maxlength="16" placeholder="Tên (3–12 ký tự)" autocomplete="off" spellcheck="false" aria-label="Tên người chơi"><button type="submit" class="primary">Lưu điểm</button></form><div class="nameerr" id="nameerr"></div>`;
+}
+let lastSaved: Entry | null = null;
+async function saveScore(name: string) {
+  const err = nameError(name); if (err) { $('nameerr').textContent = err; return; }
+  const e: Entry = { name: normalizeName(name), score: campaign.total, nights_won: nightsWon(), achieved_at: isoLocal(), seed: currentSeed };
+  await lbStore(insertEntry(await lbLoad(), e)); campaign.saved = true; lastSaved = e; leaderboardScreen();
+}
+async function leaderboardScreen() {
+  const list = await lbLoad(); mode = mode === 'play' ? mode : 'menu';
+  const rows = list.map((e, i) => `<tr class="${lastSaved && e.achieved_at === lastSaved.achieved_at && e.name === lastSaved.name ? 'me' : ''}"><td class="num">${i + 1}</td><td>${e.name.replace(/[<&]/g, '')}</td><td class="num">${e.score.toLocaleString('vi-VN')}</td><td class="num">${e.nights_won}/3</td><td>${e.achieved_at.replace('T', ' ').slice(0, 16)}</td><td class="num">${e.seed}</td></tr>`).join('');
+  show(`<h2>Bảng xếp hạng</h2><p>Top 10 trên máy này. Điểm = tổng điểm các Đêm đã thắng; bằng điểm thì ai đạt trước đứng trên.</p>
+    ${list.length ? `<table class="lb"><thead><tr><th class="num">#</th><th>Tên</th><th class="num">Điểm</th><th class="num">Đêm thắng</th><th>Thời điểm</th><th class="num">Seed</th></tr></thead><tbody>${rows}</tbody></table>` : '<p class="note">Chưa có ai. Hãy là người đầu tiên!</p>'}
+    <div class="row">${btn('menu', 'Về menu', true)}</div>`, 'wide');
+}
+
 function result() {
   mode = 'result'; const won = game.state === 'won', p = game.player, lit = game.lanterns.filter(l => l.lit).length;
   if (won) { campaign.total += game.score; campaign.scores[night - 1] = game.score; }
@@ -381,31 +483,44 @@ function result() {
   if (won) show(`<div class="eyebrow">Đêm ${night} hoàn thành</div><h1>${STORY[night].title} đã thức giấc</h1>${stats}
       <p>Tổng điểm hành trình: <b class="gold">${campaign.total}</b></p><div class="row">${night < 3 ? btn('next', `Sang Đêm ${night + 1}`, true) : btn('dawn', 'Đón bình minh', true)}${btn('menu', 'Về menu')}</div>`, 'result win');
   else show(`<div class="eyebrow">Đêm ${night} chưa xong</div><h1>Đêm còn dài…</h1><p>${reason} Đừng nản, Mây: châm dầu trước khi đèn yếu, và xua Bóng Mực đang hút dầu.</p>${stats}
-      <div class="row">${btn('retry', `Chơi lại Đêm ${night}`, true)}${btn('menu', 'Về menu')}</div>`, 'result lose');
+      ${nameForm()}<div class="row">${btn('retry', `Chơi lại Đêm ${night}`, true)}${btn('menu', 'Về menu')}</div>`, 'result lose');
+  if (!won) focusName();
 }
 function dawn() {
   mode = 'dawn'; $('hud').classList.add('hidden'); sound.stopMusic(); sound.play('win');
   show(`<div class="eyebrow">Bình Minh</div><h1>Quần đảo đã sáng đèn</h1><p>“Cháu làm được rồi, Mây. Từ Đảo Bến tới Đảo Chuông, ánh sáng đã trở về.” — Ông Đăng</p>
     <div class="stats">${[1, 2, 3].map(n => `<div><small>Đêm ${n}</small><b>${campaign.scores[n - 1] ?? '—'}</b></div>`).join('')}<div><small>Tổng điểm</small><b class="gold">${campaign.total}</b></div></div>
-    <div class="row">${btn('again', 'Chơi lại từ đầu', true)}${btn('menu', 'Về menu')}</div>`, 'dawn');
+    ${nameForm()}<div class="row">${btn('again', 'Chơi lại từ đầu', true)}${btn('menu', 'Về menu')}</div>`, 'dawn');
+  focusName();
+}
+function focusName() {
+  const f = document.getElementById('nameform') as HTMLFormElement | null; if (!f) return;
+  f.addEventListener('submit', ev => { ev.preventDefault(); void saveScore((document.getElementById('pname') as HTMLInputElement).value); });
+  setTimeout(() => (document.getElementById('pname') as HTMLInputElement | null)?.focus(), 50);
 }
 scr.addEventListener('click', e => {
   const act = (e.target as HTMLElement).closest('button')?.dataset.act; if (!act) return;
   sound.ensure(); sound.play('click');
-  if (act === 'start' || act === 'again') { campaign = { total: 0, scores: [], attempts: 0 }; intro(1); }
-  else if (act.startsWith('practice-')) { campaign = { total: 0, scores: [], attempts: 0 }; intro(Number(act.slice(9)) as NightId); }
+  if (act === 'start' || act === 'again') { campaign = newCampaign(); intro(1); }
+  else if (act.startsWith('practice-')) { campaign = newCampaign(); intro(Number(act.slice(9)) as NightId); }
+  else if (act === 'leaderboard') void leaderboardScreen();
+  else if (act === 'controls') { capture = null; bindMsg = ''; controlsScreen(); }
+  else if (act === 'controls-back') { capture = null; settingsScreen(settingsBack); }
+  else if (act === 'bind-reset') { capture = null; settings.bindings = structuredClone(DEFAULT_BINDINGS); saveSettings(); renderHints(); bindMsg = 'Đã khôi phục phím mặc định.'; controlsScreen(); }
+  else if (act.startsWith('bind-')) { const [, a, i] = act.split('-'); capture = { action: a as Action, slot: Number(i) }; controlsScreen(); }
   else if (act === 'settings') settingsScreen(mode === 'paused' ? pauseMenu : menu);
   else if (act === 'settings-back') settingsBack();
   else if (act === 'play') play();
   else if (act === 'menu') menu();
   else if (act === 'resume') requestPause();
-  else if (act === 'restart' || act === 'retry') { campaign.attempts++; intro(night); }
+  else if (act === 'restart' || act === 'retry') { campaign.attempts++; campaign.saved = false; intro(night); }
   else if (act === 'next') intro((night + 1) as NightId);
   else if (act === 'dawn') dawn();
 });
 scr.addEventListener('input', e => {
   const t = e.target as HTMLInputElement, k = t.dataset.set as keyof Settings | undefined; if (!k) return;
-  if (k === 'fps') settings.fps = t.checked; else if (k === 'cb') { settings.cb = t.checked; applyCb(); } else { (settings as any)[k] = Number(t.value); const o = t.parentElement?.querySelector('output'); if (o) o.textContent = `${Math.round(Number(t.value) * 100)}%`; }
+  if (k === 'fps') settings.fps = t.checked; else if (k === 'cb') { settings.cb = t.checked; applyCb(); }
+  else if (k === 'reduce' || k === 'big' || k === 'subs') { settings[k] = t.checked; applyA11y(); } else { (settings as any)[k] = Number(t.value); const o = t.parentElement?.querySelector('output'); if (o) o.textContent = `${Math.round(Number(t.value) * 100)}%`; }
   $('fps').classList.toggle('hidden', !settings.fps); saveSettings();
 });
 $('fps').classList.toggle('hidden', !settings.fps);
@@ -413,8 +528,10 @@ $('fps').classList.toggle('hidden', !settings.fps);
 // ---------- Input ----------
 function requestPause() { if (mode === 'play' || mode === 'paused') pauseQueue++; }
 addEventListener('keydown', e => {
+  if (capture) { e.preventDefault(); if (!e.repeat) setBinding(e.code); return; }
+  if ((e.target as HTMLElement)?.tagName === 'INPUT' && (e.target as HTMLInputElement).type === 'text') return; // typing a name
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
-  if ((e.code === 'Escape' || e.code === 'KeyP') && !e.repeat) {
+  if (settings.bindings.pause.includes(e.code) && !e.repeat) {
     if (mode === 'play' || mode === 'paused') { if (mode === 'paused' && scr.classList.contains('settings')) { pauseMenu(); return; } requestPause(); return; }
   }
   if (e.code === 'F3') { settings.fps = !settings.fps; $('fps').classList.toggle('hidden', !settings.fps); saveSettings(); e.preventDefault(); }
@@ -439,7 +556,7 @@ function tickOnce() {
   if (pauseLatch) pauseLatch = false; else if (pauseQueue > 0) { pauseQueue--; pause = pauseLatch = true; }
   const p = game.player, wasGrounded = p.grounded, hadLaunch = !!p.launch;
   const input: Input = mode === 'play'
-    ? { move: keyboardMove(keys), cam_yaw_deg: yaw, jump: keys.has('Space'), interact: keys.has('KeyE'), pulse: keys.has('KeyQ'), dash: keys.has('ShiftLeft') || keys.has('ShiftRight'), pause }
+    ? { move: keyboardMove(keys, settings.bindings), cam_yaw_deg: yaw, jump: actionDown(keys, settings.bindings, 'jump'), interact: actionDown(keys, settings.bindings, 'interact'), pulse: actionDown(keys, settings.bindings, 'pulse'), dash: actionDown(keys, settings.bindings, 'dash'), pause }
     : { ...idle(), cam_yaw_deg: yaw, pause };
   scoreBefore = game.score; const events = step(game, input);
   if (wasGrounded && !p.grounded && p.respawn === 0) { if (p.launch && !hadLaunch) { sound.play('pad'); burst([p.pos[0], p.pos[1] + 0.3, p.pos[2]], 14, 5, C.gold); } else if (p.vel[1] > 0) sound.play('jump'); }
@@ -454,15 +571,16 @@ function onEvent(e: Event) {
       toast(e.data.relight ? `Thắp lại đèn ${l.id}! +${tuning.score.per_relight}` : `Đèn ${l.id} đã sáng! +${tuning.score.per_lantern}`);
       if (capacity(p) > lastCap) toast(`Túi rộng hơn: ${capacity(p)} đom đóm`); lastCap = capacity(p); break; }
     case 'refuel': { sound.play('refuel'); const l = game.lanterns.find(x => x.id === e.data.lantern_id)!; burst([l.pos[0] + 0.7, l.pos[1] + 1.9, l.pos[2]], 12, 3, C.gold, 0.5); toast(`Châm dầu ${l.id}: ${e.data.fuel} · +${(e.data.amount as number) * tuning.score.per_mote}`); break; }
-    case 'lantern_out': { sound.play('out'); const l = game.lanterns.find(x => x.id === e.data.lantern_id)!; burst([l.pos[0] + 0.7, l.pos[1] + 1.9, l.pos[2]], 16, 1.5, 0x555566, 0.6); toast(`Đèn ${l.id} đã tắt! Thắp lại cần ${tuning.relight_cost} đom đóm`, 'danger'); break; }
+    case 'lantern_out': { sound.play('out'); caption(`[Phụt] Đèn ${e.data.lantern_id} đã tắt`, 'danger'); const l = game.lanterns.find(x => x.id === e.data.lantern_id)!; burst([l.pos[0] + 0.7, l.pos[1] + 1.9, l.pos[2]], 16, 1.5, 0x555566, 0.6); toast(`Đèn ${l.id} đã tắt! Thắp lại cần ${tuning.relight_cost} đom đóm`, 'danger'); break; }
     case 'fuel_drain': { const id = e.data.lantern_id as string, now = performance.now(); if ((drainToast.get(id) ?? 0) < now) { drainToast.set(id, now + 4000); sound.play('drain'); toast(`Bóng Mực đang hút dầu đèn ${id} (${e.data.fuel})!`, 'danger'); } break; }
     case 'pulse': sound.play('pulse'); waveT = 0; wave.position.set(p.pos[0], p.pos[1] + rules.pulse_center_y, p.pos[2]); waveRing.position.set(p.pos[0], p.pos[1] + 0.08, p.pos[2]); { const n = (e.data.stunned_ids as string[]).length; if (n) toast(`Xua ${n} Bóng Mực · +${game.score - scoreBefore}`); } break;
-    case 'player_hit': sound.play(e.data.by === 'fall' ? 'fall' : 'hit'); flash(); shake = 0.5; toast(e.data.by === 'fall' ? `Rơi xuống biển mây! Mất ${e.data.lost} đom đóm` : `Bị Bóng Mực chạm! Rơi ${e.data.dropped} đom đóm`, 'danger'); break;
+    case 'player_hit': sound.play(e.data.by === 'fall' ? 'fall' : 'hit'); if (!settings.reduce) { flash(); shake = 0.5; } toast(e.data.by === 'fall' ? `Rơi xuống biển mây! Mất ${e.data.lost} đom đóm` : `Bị Bóng Mực chạm! Rơi ${e.data.dropped} đom đóm`, 'danger'); break;
     case 'dash': sound.play('dash'); burst(at, 6, 1.5, 0xdfe8ff, 0.4); break;
     case 'charm_picked': sound.play('charm'); burst(at, 18, 4, C.scarf, 0.6); toast('Bùa Gió! Chạy nhanh và lướt liên tục trong 10 giây'); break;
-    case 'drifter_steal': sound.play('steal'); toast(`Gió Lạc cướp ${e.data.amount} đom đóm!`, 'danger'); break;
+    case 'drifter_steal': sound.play('steal'); caption('[Vù] Gió Lạc cướp đom đóm', 'danger'); toast(`Gió Lạc cướp ${e.data.amount} đom đóm!`, 'danger'); break;
     case 'drifter_drop': sound.play('drop'); toast(`Gió Lạc đánh rơi ${e.data.amount} đom đóm`); break;
-    case 'shade_spawned': sound.play('spawn'); break;
+    case 'shade_spawned': { sound.play('spawn'); const id = e.data.id as string; shadeCues.set(id, performance.now() + 4000); const s = game.shades.find(x => x.id === id);
+      caption(`[Tiếng rít] Bóng Mực ${id} xuất hiện${s ? ` · cách ${Math.round(Math.hypot(s.pos[0] - p.pos[0], s.pos[2] - p.pos[2]))} m` : ''}`, 'danger'); break; }
     case 'paused': mode = 'paused'; keys.clear(); pauseMenu(); break;
     case 'resumed': mode = 'play'; hideScreen(); break;
     case 'game_over': mode = 'ending'; endAt = performance.now() + 1400; sound.stopMusic(); sound.play(e.data.result === 'won' ? 'win' : 'lose');
@@ -522,36 +640,40 @@ function render(dt: number, now: number) {
   ambient += (target - ambient) * Math.min(1, dt * 2); if (Math.abs(target - ambient) < 0.002) ambient = target; hemi.intensity = ambient;
   moon.intensity = 0.6 + ambient * 0.6;
 
-  // Motes
-  sync(moteViews, g.motes, () => { const s = sprite(moteTex, 0.9); scene.add(s); return s; }, s => scene.remove(s));
+  // Motes (instanced billboards)
   g.motes.forEach((m, i) => {
-    const s = moteViews.get(m.id)!; const ph = i * 1.7;
-    s.position.set(m.pos[0] + Math.sin(t * 1.3 + ph) * 0.12, m.pos[1] + 0.75 + Math.sin(t * 2.2 + ph) * 0.18, m.pos[2] + Math.cos(t * 1.1 + ph) * 0.12);
-    const blink = m.ttl !== null && m.ttl < 120 ? (Math.floor(t * 8) % 2 ? 0.25 : 1) : 1;
-    (s.material as T.SpriteMaterial).opacity = blink; s.scale.setScalar(0.8 + Math.sin(t * 4 + ph) * 0.12);
+    const ph = i * 1.7, blink = m.ttl !== null && m.ttl < 120 ? (Math.floor(t * 8) % 2 ? 0.25 : 1) : 1;
+    _v.set(m.pos[0] + Math.sin(t * 1.3 + ph) * 0.12, m.pos[1] + 0.75 + Math.sin(t * 2.2 + ph) * 0.18, m.pos[2] + Math.cos(t * 1.1 + ph) * 0.12);
+    if (i < INST_MAX) setBillboard(moteInst, i, _v, 0.8 + Math.sin(t * 4 + ph) * 0.12, 0xffffff, blink);
   });
+  finishInstances(moteInst, Math.min(INST_MAX, g.motes.length));
 
-  // Shades
+  // Shades (instanced hull / outline / eyes / aura; stars + tether stay per shade)
   sync(shadeViews, g.shades, () => makeShade(), v => { world.remove(v.g); world.remove(v.tether); });
+  let ns = 0; const line = shadeLine(), auraHex = settings.cb ? 0x80d8ff : 0xffffff;
   for (const s of g.shades) {
     const v = shadeViews.get(s.id)!; if (v.born < 0) { v.born = t; if (g.tick > 0) burst([s.pos[0], s.pos[1] + 1, s.pos[2]], 12, 3, C.outline, 0.8); }
     const grow = Math.min(1, (t - v.born) / 0.5);
     v.g.position.set(s.pos[0], s.pos[1] + Math.sin(t * 3 + s.pos[0]) * 0.12, s.pos[2]);
     const lookL = s.state === 'drain' ? g.lanterns.find(l => l.id === s.lantern) : undefined, lk = lookL ? [lookL.pos[0] + 0.7, lookL.pos[2]] : [p.pos[0], p.pos[2]];
     v.g.rotation.y = Math.atan2(lk[0] - s.pos[0], lk[1] - s.pos[2]);
-    const stunned = s.state === 'stunned';
-    (v.body.material as T.MeshBasicMaterial).color.setHex(stunned ? C.stunned : C.shade);
-    const line = shadeLine(), drain = s.state === 'drain';
-    (v.outline.material as T.MeshBasicMaterial).color.setHex(stunned ? 0x5a4f7a : line);
-    (v.eyes[0].material as T.MeshBasicMaterial).color.setHex(stunned ? 0x8a80a8 : line);
-    v.aura.material.color.setHex(settings.cb ? 0x80d8ff : 0xffffff); v.aura.material.opacity = drain ? 0.6 + Math.sin(t * 10) * 0.15 : 0.35;
+    const stunned = s.state === 'stunned', drain = s.state === 'drain';
     const tl = drain ? g.lanterns.find(l => l.id === s.lantern) : undefined; v.tether.visible = !!tl;
     if (tl) { const from = tmp.set(s.pos[0], s.pos[1] + 1.1, s.pos[2]), to = new T.Vector3(tl.pos[0] + 0.7, tl.pos[1] + 1.9, tl.pos[2]); v.tether.position.copy(from); v.tether.lookAt(to); v.tether.scale.set(1 + Math.sin(t * 12) * 0.3, 1 + Math.sin(t * 12) * 0.3, from.distanceTo(to)); (v.tether.material as T.MeshBasicMaterial).color.setHex(line); }
     v.stars.visible = stunned; v.stars.rotation.y = t * 4;
-    v.eyes.forEach(e => e.scale.setScalar(stunned ? 0.4 : s.state === 'chase' ? 1.25 : 1));
-    v.g.scale.setScalar((s.state === 'recoil' ? 0.85 : 1) * grow * (1 + Math.sin(t * 5) * 0.03));
+    const sc = (s.state === 'recoil' ? 0.85 : 1) * grow * (1 + Math.sin(t * 5) * 0.03);
+    v.g.scale.setScalar(sc);
     v.g.visible = s.state !== 'recoil' || Math.floor(t * 10) % 2 === 0;
+    if (!v.g.visible || ns >= INST_MAX) continue;
+    v.g.updateMatrix(); const gm = v.g.matrix;
+    shadeInst.hull.setMatrixAt(ns, gm); shadeInst.hull.setColorAt(ns, _c.setHex(stunned ? C.stunned : C.shade));
+    shadeInst.outline.setMatrixAt(ns, gm); shadeInst.outline.setColorAt(ns, _c.setHex(stunned ? 0x5a4f7a : line));
+    const k = stunned ? 0.4 : s.state === 'chase' ? 1.25 : 1; // eye size by state (spacing kept)
+    shadeInst.eyes.setMatrixAt(ns, _m2.multiplyMatrices(gm, _m.makeTranslation(0, 1.25, 0.5).scale(_s.set(1, k, k)))); shadeInst.eyes.setColorAt(ns, _c.setHex(stunned ? 0x8a80a8 : line));
+    setBillboard(shadeInst.aura, ns, _v.set(0, 1, 0).applyMatrix4(gm), 3 * sc, auraHex, drain ? 0.6 + Math.sin(t * 10) * 0.15 : 0.35);
+    ns++;
   }
+  for (const im of Object.values(shadeInst)) finishInstances(im, ns);
 
   // Drifters
   sync(drifterViews, g.drifters, () => makeDrifter(), v => world.remove(v.g));
@@ -592,7 +714,8 @@ function render(dt: number, now: number) {
 
   // Camera (smoothed third person; stays above terrain)
   const a = yaw * Math.PI / 180, focus = tmp.set(p.pos[0], Math.max(p.pos[1], rules.fall_y + 4) + 1.2, p.pos[2]);
-  if (mode === 'menu' || mode === 'intro') {
+  if (mode === 'bench') { const c = benchCamera(Math.max(0, (now - bench.start) / 1000)); camera.position.set(c[0], c[1], c[2]); camera.lookAt(0, 0, 0); }
+  else if (mode === 'menu' || mode === 'intro') {
     const o = t * 0.06, r = mode === 'menu' ? 58 : 40;
     camera.position.lerp(new T.Vector3(Math.cos(o) * r + (night === 2 ? 35 : 0), 26, Math.sin(o) * r), 1 - Math.exp(-dt * 1.5)); camera.lookAt(night === 2 ? 35 : 0, 0, 0);
   } else {
@@ -602,8 +725,9 @@ function render(dt: number, now: number) {
     if (shake > 0) { shake = Math.max(0, shake - dt); camera.position.x += (Math.random() - 0.5) * shake; camera.position.y += (Math.random() - 0.5) * shake; }
     camera.lookAt(focus); updateOcclusion(camera.position, focus);
   }
-  renderer.render(scene, camera);
+  const q0 = performance.now(); renderer.render(scene, camera); const q1 = performance.now();
   if (mode !== 'menu' && mode !== 'intro') hud(t);
+  if (benchProf) (window as any).__prof = [q0, q1, performance.now()];
 }
 
 function hud(t: number) {
@@ -636,7 +760,14 @@ function hud(t: number) {
   const weakHere = g.lanterns.some(l => isWeak(l) && dxz(l.pos) <= tuning.safe_radius);
   $('status').innerHTML = [safe ? '<span class="safe">✦ Vùng an toàn</span>' : weakHere ? '<span class="weak warn">Đèn yếu, hết vùng an toàn</span>' : '', p.charm > 0 ? `<span class="charm">❖ Bùa Gió ${(p.charm / 60).toFixed(1)}s</span>` : '', g.wind.active ? '<span class="wind">🍃 Gió đang thổi</span>' : ''].join('');
   $('windwarn').classList.toggle('hidden', !(g.wind.warning && !g.wind.active));
-  if (g.wind.warning && !windWarned) { windWarned = true; sound.play('wind'); }
+  if (g.wind.warning && !windWarned) { windWarned = true; sound.play('wind'); caption('[Gió rít] Lá bay rối: gió lớn sắp thổi! Giữ vững chân.', 'danger', 4000); }
+  // 10 s cue: big countdown in the centre (visual twin of the tick sound).
+  const left = Math.ceil(g.time_left_s - 1e-9), cdEl = $('countdown');
+  cdEl.classList.toggle('hidden', !(settings.subs && g.state === 'playing' && left <= 10 && left > 0));
+  if (left <= 10 && left > 0) cdEl.innerHTML = `${left}<small>giây tới bình minh</small>`;
+  // Weak lantern cue: caption when a lantern drops below 30 fuel.
+  for (const l of g.lanterns) { const w = isWeak(l); if (w && !weakSeen.has(l.id)) caption(`⚠ Đèn ${l.id} yếu (dầu ${Math.floor(l.fuel / FU)}): mất vùng an toàn, hãy châm dầu!`, 'danger', 4000); if (w) weakSeen.add(l.id); else weakSeen.delete(l.id); }
+  shadeArrows();
   if (!g.wind.warning) windWarned = false;
   // Countdown last 10 s
   const sec = Math.ceil(g.time_left_s - 1e-9);
@@ -651,7 +782,7 @@ function hud(t: number) {
     const on = !behind && Math.abs(x) <= 0.92 && Math.abs(y) <= 0.9;
     arrow.classList.toggle('hidden', on);
     if (!on) {
-      const ang = Math.atan2(y, x), s = Math.min(0.86 / Math.abs(Math.cos(ang) || 1e-6), (Math.sin(ang) < 0 ? 0.6 : 0.72) / Math.abs(Math.sin(ang) || 1e-6)); // keep clear of bottom HUD / help
+      const ang = Math.atan2(y, x), s = Math.min(0.86 / Math.abs(Math.cos(ang) || 1e-6), (Math.sin(ang) < 0 ? 0.46 : 0.72) / Math.abs(Math.sin(ang) || 1e-6)); // keep clear of bottom HUD / help (18 px text, Ticket-04)
       arrow.style.left = `${(Math.cos(ang) * s + 1) / 2 * innerWidth}px`; arrow.style.top = `${(1 - Math.sin(ang) * s) / 2 * innerHeight}px`;
       (arrow.firstElementChild as HTMLElement).style.transform = `rotate(${-ang}rad)`;
       arrow.querySelector('span')!.textContent = `${weakL ? '⚠ ' : ''}${target.id} · ${Math.round(dxz(target.pos))}m${weakL ? ` · dầu ${Math.floor(target.fuel / FU)}` : ''}`;
@@ -660,11 +791,63 @@ function hud(t: number) {
   void t;
 }
 
+/** Spawn cue: edge-of-screen arrow toward each newly spawned shade (4 s); on screen, a marker above it instead. */
+function shadeArrows() {
+  const box = $('shadearrows'), now = performance.now(), live: string[] = [];
+  for (const [id, until] of shadeCues) { const s = game.shades.find(x => x.id === id); if (!s || until < now || !settings.subs) shadeCues.delete(id); else live.push(id); }
+  while (box.children.length < live.length) box.insertAdjacentHTML('beforeend', '<div class="shadearrow"><div class="tip"></div><span></span></div>');
+  [...box.children].forEach((el, i) => {
+    const div = el as HTMLElement, id = live[i]; div.style.display = id ? '' : 'none'; if (!id) return;
+    const s = game.shades.find(x => x.id === id)!, v = tmp.set(s.pos[0], s.pos[1] + 2.2, s.pos[2]).project(camera);
+    const behind = v.z > 1; let x = v.x, y = v.y; if (behind) { x = -x; y = -y; if (Math.hypot(x, y) < 1e-3) y = -1; }
+    const on = !behind && Math.abs(x) <= 0.92 && Math.abs(y) <= 0.88, ang = on ? -Math.PI / 2 : Math.atan2(y, x);
+    const k = on ? 1 : Math.min(0.86 / Math.abs(Math.cos(ang) || 1e-6), (Math.sin(ang) < 0 ? 0.46 : 0.72) / Math.abs(Math.sin(ang) || 1e-6));
+    const px = on ? x : Math.cos(ang) * k, py = on ? y + 0.08 : Math.sin(ang) * k;
+    div.style.left = `${(px + 1) / 2 * innerWidth}px`; div.style.top = `${(1 - py) / 2 * innerHeight}px`;
+    (div.firstElementChild as HTMLElement).style.transform = `rotate(${-ang}rad)`;
+    div.querySelector('span')!.textContent = `Bóng Mực ${id}`;
+  });
+}
 function finishNight() { if (game.state === 'won' && night === 3) { campaign.total += game.score; campaign.scores[2] = game.score; dawn(); } else result(); }
 // ---------- Main loop ----------
+// ---------- Ticket-04 benchmark (?bench=1&seed=42&duration=30): standard scene, orbit camera, frame times ----------
+const qs = new URLSearchParams(location.search);
+const benchCfg = qs.get('bench') === '1' ? { seed: Number(qs.get('seed') ?? 42), duration: Number(qs.get('duration') ?? 30), warmup: 3 } : null;
+const bench = { start: -1, prev: -1, dts: [] as number[], done: false, frames: 0, prevLog: -1 };
+const benchProf = qs.get('prof') === '1';
+function startBench() {
+  mode = 'bench'; hideScreen(); $('hud').classList.remove('hidden');
+  loadNight(1, benchCfg!.seed, benchScenario(benchCfg!.seed));
+  settings.reduce = true; shake = 0; // camera follows the standard orbit only
+}
+function benchFrame(now: number) {
+  if (bench.start < 0) {
+    bench.start = now;
+    const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const gpu = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : String(gl.getParameter(gl.RENDERER));
+    native?.benchFirstFrame(performance.timeOrigin + now, { gpu, three: T.REVISION, webgl: renderer.capabilities.isWebGL2 ? 'WebGL2' : 'WebGL1', pixelRatio: renderer.getPixelRatio(), size: [innerWidth, innerHeight] });
+  }
+  const t = (now - bench.start) / 1000;
+  if (bench.prev >= 0 && t > benchCfg!.warmup && !bench.done) bench.dts.push(now - bench.prev);
+  bench.prev = now;
+  if (t >= benchCfg!.warmup + benchCfg!.duration && !bench.done) {
+    bench.done = true; (window as any).__ddl.benchResult = bench.dts;
+    if (native) native.benchDone(bench.dts); else console.log('bench done', bench.dts.length, 'frames');
+  }
+  return t;
+}
 function frame(now: number) {
   requestAnimationFrame(frame);
   const dt = Math.min((now - last) / 1000, 0.25); last = now;
+  if (mode === 'bench') {
+    benchFrame(now);
+    const p0 = performance.now();
+    acc += dt; while (acc >= 1 / rules.tps) { acc -= 1 / rules.tps; step(game, idle()); }
+    const p1 = performance.now();
+    render(dt, now); // render() places the orbit camera for mode 'bench' and draws once
+    if (benchProf && now - bench.prevLog > 0) { const p2 = performance.now(), fr = bench.dts.at(-1) ?? 0; if (fr > 30) { const q = (window as any).__prof; console.log(`spike ${fr.toFixed(1)}ms sim ${(p1 - p0).toFixed(1)} render ${(p2 - p1).toFixed(1)} [update ${(q[0] - p1).toFixed(1)} gl ${(q[1] - q[0]).toFixed(1)} hud ${(q[2] - q[1]).toFixed(1)}] heap ${((performance as any).memory?.usedJSHeapSize / 1e6).toFixed(1)}`); } }
+    return;
+  }
   if (mode === 'play' || mode === 'paused') {
     acc += dt;
     while (acc >= 1 / rules.tps) { acc -= 1 / rules.tps; tickOnce(); if ((mode as Mode) === 'ending') break; }
@@ -678,5 +861,5 @@ function frame(now: number) {
     $('fps').textContent = `${fpsStats.fps} FPS · ${innerWidth}×${innerHeight}`;
   }
 }
-menu();
+if (benchCfg) startBench(); else menu();
 requestAnimationFrame(frame);
