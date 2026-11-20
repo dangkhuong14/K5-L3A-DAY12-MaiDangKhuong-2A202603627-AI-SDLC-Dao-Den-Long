@@ -4,6 +4,13 @@
 
 Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Hướng dẫn điều khiển, điểm số và giả định: [game/README.md](game/README.md).
 
+[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing)
+
+Link Drive dùng để xem demo tạm thời; chưa xác minh quyền truy cập và thời lượng. Video bàn giao cuối sẽ được đính kèm Release `v1.0.0` hoặc lưu trong repo theo SUBMISSION.md.
+
+[Bằng chứng tự động Phase 1](docs/proof/phase-1/2026-11-20T09-29-34-321Z/results.json)
+
+
 Cài và chơi từ gốc repo (Node.js 22.12+ hoặc 24):
 
 ```sh
