@@ -1,0 +1,49 @@
+
+> dao-den-long@1.0.0 test
+> tsx --test game/tests/*.test.ts
+
+✔ manifest tuning matches actual core and contract is v1.1 (2.2ms)
+✔ 60 ticks move six meters, snapshot0 before inputs (5.2456ms)
+✔ yaw90 and diagonal normalization (1.401ms)
+✔ pickup radius inclusive in XZ, height tolerance, capacity 10 (0.8469ms)
+✔ deposit uses needed amount, scores per deposited mote, lights only once (0.7651ms)
+✔ interact radius 2.0 inclusive, nearest then smaller id (24.697ms)
+✔ pulse costs once on held edge and stuns (0.8552ms)
+✔ scenario initialization: no score/events, partial lamp override (0.3527ms)
+✔ multiple simultaneous contacts lose one flame, invulnerable afterwards (0.6639ms)
+✔ win stops subsequent steps, adds bonus once (0.3659ms)
+✔ dawn loss (0.2779ms)
+✔ deterministic generated world (0.7176ms)
+✔ CLI persistent frames, deterministic output, error code 2 (868.2815ms)
+✔ browser keys map A/left to screen-left and D/right to screen-right at every yaw (5.8186ms)
+✔ W/S remain forward/backward; opposite keys cancel (1.1346ms)
+✔ v1.1 snapshot shape, night_start event, --night 2/3 accepted, bad night exits 2 (876.8951ms)
+✔ dash: 14 m/s for 12 ticks (2.8 m), facing when idle, cooldown 90 ticks from start, keeps altitude in air (339.3552ms)
+✔ jump: 7 m/s, gravity 20, only from ground, lands after 42 ticks (166.5278ms)
+✔ fall off island: -1 flame, lose all motes, wait 60 ticks, respawn at start with invuln 90 (345.9841ms)
+✔ night 2 launch pad flies ~1.4 s to the other island; bridge is walkable (498.507ms)
+✔ night 3: cliffs block, ramp climbs to tier 1, pad lands on tier 2, tower blocks (516.7175ms)
+✔ drifter: chases at >=5 motes, steals min(3,carried) once, flees 240 ticks then removed; invuln does not protect (346.44ms)
+✔ drifter + pulse: chase -> flee without stealing; flee with loot drops it as dropped motes, removed after 120 (349.1973ms)
+✔ drifter schedule: D1 at tick 1200 on night 2, none on night 1 (374.3513ms)
+✔ wind charm: 600 ticks of 7.2 m/s and dash without cooldown; respawn after 2700 (181.7247ms)
+✔ wind on night 3: warning at 1680, active 1800..2099, pushes 2 m/s; wind_enabled false disables (394.4124ms)
+✔ pause: tick advances, sim_tick/time/cooldowns freeze, state paused, events paused/resumed (169.2545ms)
+✔ motes: 20 distinct start points, +1 every 240 ticks up to the point count, dropped TTL 480 (325.5856ms)
+✔ same-tick win beats dawn; no_flames beats all_lit; bonus = floor(time)*2 + 50*flames (323.2219ms)
+✔ deterministic full-night replay incl. generated ids, and full night within 30 s (10855.0938ms)
+✔ pulse: stun 120 ticks, 4 m push in first 15 ticks, re-pulse refreshes, never removes (7.8189ms)
+✔ pulse uses 3D distance from foot + 0.8 m, requires 3 motes and cooldown (15.7238ms)
+✔ newly lit lantern evacuates inside shades to the edge within 30 ticks without damage (3.9521ms)
+✔ outside shades are blocked at the 6 m edge of a lit lantern (5.5462ms)
+✔ shade chases at 4 m/s within 12 m, ignores farther player, hit causes recoil + drop (2.3011ms)
+✔ coincident pursuers separate, keep all IDs and deterministic replay (12.2519ms)
+✔ spawn schedule night 1: 2 at tick 300, 1 per 480 ticks, max 6, >= 15 m from player, ids S1.. (58.9805ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16412.7517

@@ -19,6 +19,7 @@ Dành cho người lần đầu làm game, ưu tiên hiểu yêu cầu và cách
 | [04-EDGE-CASES.md](04-EDGE-CASES.md) | Tình huống biên và kế hoạch kiểm chứng |
 | [05-TOOLS-AND-PLAN.md](05-TOOLS-AND-PLAN.md) | Chọn công cụ và lộ trình cho người mới |
 | [06-TRACKING.md](06-TRACKING.md) | Giả định, truy vết, thay đổi, bằng chứng và nhật ký AI |
+| [07-PHASE-2-SPEC.md](07-PHASE-2-SPEC.md) | Spec Phase 2 (Ticket-02) với acceptance criteria cho từng tính năng mới |
 
 ## Việc cần làm ngay
 

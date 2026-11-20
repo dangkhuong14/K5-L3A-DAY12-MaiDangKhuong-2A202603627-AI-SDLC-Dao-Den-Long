@@ -1,0 +1,450 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "label": "tests",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "test"
+      ],
+      "exit_code": 0,
+      "ms": 17983,
+      "passed": true
+    },
+    {
+      "label": "build",
+      "command": "node",
+      "args": [
+        "<npm-cli>",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "ms": 3581,
+      "passed": true
+    },
+    {
+      "label": "dash",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "30",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\dash.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\dash.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\dash.inputs.json"
+      ],
+      "exit_code": 0,
+      "ms": 151,
+      "passed": true
+    },
+    {
+      "label": "drifter-steal",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "400",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\drifter-steal.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\drifter-steal.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 153,
+      "passed": true
+    },
+    {
+      "label": "drifter-pulse-drop",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "5",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\drifter-pulse-drop.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\drifter-pulse-drop.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\drifter-pulse-drop.inputs.json"
+      ],
+      "exit_code": 0,
+      "ms": 145,
+      "passed": true
+    },
+    {
+      "label": "wind-charm",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "70",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\wind-charm.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\wind-charm.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\wind-charm.inputs.json"
+      ],
+      "exit_code": 0,
+      "ms": 166,
+      "passed": true
+    },
+    {
+      "label": "strong-wind-night3",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "1860",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\strong-wind-night3.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\strong-wind-night3.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 178,
+      "passed": true
+    },
+    {
+      "label": "pause",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "40",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\pause.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\pause.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\pause.inputs.json"
+      ],
+      "exit_code": 0,
+      "ms": 165,
+      "passed": true
+    },
+    {
+      "label": "night2-launch-pad",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "120",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\night2-launch-pad.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\night2-launch-pad.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 178,
+      "passed": true
+    },
+    {
+      "label": "night3-pad-to-tier2",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "90",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\night3-pad-to-tier2.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\night3-pad-to-tier2.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 176,
+      "passed": true
+    },
+    {
+      "label": "win-scoring",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "5",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\win-scoring.jsonl",
+        "--snapshot-every",
+        "1",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\win-scoring.scenario.json",
+        "--inputs",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\win-scoring.inputs.json"
+      ],
+      "exit_code": 0,
+      "ms": 173,
+      "passed": true
+    },
+    {
+      "label": "full-night1-a",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night1-a.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night1-a.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 1107,
+      "passed": true
+    },
+    {
+      "label": "full-night1-b",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "1",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night1-b.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night1-b.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 1141,
+      "passed": true
+    },
+    {
+      "label": "full-night2-a",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night2-a.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night2-a.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 1882,
+      "passed": true
+    },
+    {
+      "label": "full-night2-b",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "2",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night2-b.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night2-b.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 1740,
+      "passed": true
+    },
+    {
+      "label": "full-night3-a",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night3-a.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night3-a.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 2176,
+      "passed": true
+    },
+    {
+      "label": "full-night3-b",
+      "command": "node",
+      "args": [
+        "--import",
+        "tsx",
+        "game/src/headless.ts",
+        "--seed",
+        "42",
+        "--night",
+        "3",
+        "--ticks",
+        "21600",
+        "--out",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night3-b.jsonl",
+        "--snapshot-every",
+        "600",
+        "--scenario",
+        "docs\\proof\\phase-2\\2026-11-20T13-21-06-823Z\\full-night3-b.scenario.json"
+      ],
+      "exit_code": 0,
+      "ms": 2291,
+      "passed": true
+    },
+    {
+      "label": "oracle-dash",
+      "passed": true
+    },
+    {
+      "label": "oracle-drifter-steal",
+      "passed": true
+    },
+    {
+      "label": "oracle-drifter-pulse-drop",
+      "passed": true
+    },
+    {
+      "label": "oracle-wind-charm",
+      "passed": true
+    },
+    {
+      "label": "oracle-strong-wind",
+      "passed": true
+    },
+    {
+      "label": "oracle-pause",
+      "passed": true
+    },
+    {
+      "label": "oracle-night2-pad",
+      "passed": true
+    },
+    {
+      "label": "oracle-night3-pad",
+      "passed": true
+    },
+    {
+      "label": "oracle-win-scoring",
+      "passed": true
+    },
+    {
+      "label": "full-night1-deterministic-under-30s",
+      "passed": true
+    },
+    {
+      "label": "full-night2-deterministic-under-30s",
+      "passed": true
+    },
+    {
+      "label": "full-night3-deterministic-under-30s",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "Headless only: browser play, FPS and screenshots are recorded separately (see docs/verification/phase-2.md).",
+    "Full-night timing includes tsx startup and JSONL writing."
+  ]
+}

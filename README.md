@@ -1,15 +1,10 @@
 # Day 12 — AI SDLC: Đảo Đèn Lồng
 
-## Bản game Phase 1 trong repo này
+## Bản game trong repo này — Phase 2 (Ticket-02 "Ba hòn đảo", Contract v1.1)
 
-Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Hướng dẫn điều khiển, điểm số và giả định: [game/README.md](game/README.md).
+Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Ba Đêm: Đảo Bến → Đảo Cau → Đảo Chuông, có Gió Lạc, Bùa Gió, gió mạnh, menu, tạm dừng, cài đặt, âm thanh và HUD đầy đủ. Điều khiển, thứ tự tick, điểm số và giả định: [game/README.md](game/README.md).
 
-[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing)
-
-Link Drive dùng để xem demo tạm thời; chưa xác minh quyền truy cập và thời lượng. Video bàn giao cuối sẽ được đính kèm Release `v1.0.0` hoặc lưu trong repo theo SUBMISSION.md.
-
-[Bằng chứng tự động Phase 1](docs/proof/phase-1/2026-11-20T09-29-34-321Z/results.json)
-
+[Video demo Phase 1 — Google Drive](https://drive.google.com/file/d/1HBArRzjnTnL7LIKdRpBtpaduluiS4IZC/view?usp=sharing) (video Phase 2 chưa quay; video bàn giao cuối ở Phase 4).
 
 Cài và chơi từ gốc repo (Node.js 22.12+ hoặc 24):
 
@@ -18,18 +13,18 @@ npm ci
 npm run dev
 ```
 
-Mở địa chỉ Vite in ra. WASD/mũi tên di chuyển, Space nhảy, E nạp đèn, Q tỏa sáng, kéo chuột xoay camera.
+Mở địa chỉ Vite in ra. WASD/mũi tên chạy, Space nhảy, Shift lướt, E nạp đèn, Q tỏa sáng, Esc/P tạm dừng, kéo chuột xoay camera, lăn chuột zoom.
 
 - Test: `npm test`; build: `npm run build`.
-- Headless: `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl`.
-- Tạo bằng chứng: `npm run evidence` → thư mục mới trong docs/proof/phase-1/. Script mới thêm, chưa chạy xác minh tại thời điểm cập nhật này; không coi việc có script là bằng chứng PASS.
-- [Hướng dẫn tạo bằng chứng và nộp Phase 1](docs/NOP-PHASE-1.md).
-- [Bản ghi kiểm chứng trước đó](docs/verification/phase-1.md). Lần chạy thành công gần nhất sau sửa A/D: 14/14 test và build đạt trên Windows; chưa có nghiệm thu đầy đủ trên Linux/macOS hoặc clip chơi trọn màn.
-- Video bàn giao cuối: chưa có, bổ sung link khi quay thật ở Phase 4.
+- Headless: `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl` (`--night` nhận 1, 2, 3).
+- Bằng chứng Phase 2: `npm run evidence:phase2` → thư mục mới trong docs/proof/phase-2/. Lần chạy đã ghi: [results.json](docs/proof/phase-2/2026-11-20T13-21-06-823Z/results.json) (`passed: true`), [tóm tắt + ảnh chơi thử](docs/proof/phase-2/summary.md), [bản ghi kiểm chứng](docs/verification/phase-2.md).
+- [Spec Phase 2 với acceptance criteria](docs/07-PHASE-2-SPEC.md).
+- Phase 1: [bằng chứng](docs/proof/phase-1/2026-11-20T09-29-34-321Z/results.json), [hướng dẫn nộp](docs/NOP-PHASE-1.md), [kiểm chứng](docs/verification/phase-1.md). Script `npm run evidence` của Phase 1 giữ nguyên làm lịch sử, oracle theo số Phase 1.
+- Harness AI: [CLAUDE.md](CLAUDE.md), skill [.claude/skills/verify-game](.claude/skills/verify-game/SKILL.md), cấu hình preview [.claude/launch.json](.claude/launch.json).
 
 ### Sáng tạo của tôi
 
-Model low-poly bằng hình khối tự tạo, nón lá treo đèn, biển mây, sao và vòng sáng pulse chỉ ở lớp hiển thị. Mô tả ở [game/README.md](game/README.md#sáng-tạo-của-tôi); chưa có ảnh/clip đính kèm để nghiệm thu sáng tạo.
+Model low-poly tự tạo, nón lá treo đèn, biển mây và sao; lời dẫn Ông Đăng mỗi Đêm, màn Bình Minh, nhạc ngũ cung tổng hợp riêng mỗi Đêm, hiệu ứng sóng Tỏa Sáng, tia lửa thắp đèn, cây tự thu nhỏ khi che Mây. Chỉ ở lớp hiển thị, không đổi đầu ra headless. Chi tiết: [game/README.md](game/README.md#sáng-tạo-của-tôi), ảnh: [docs/proof/phase-2/manual](docs/proof/phase-2/manual/).
 
 ---
 
