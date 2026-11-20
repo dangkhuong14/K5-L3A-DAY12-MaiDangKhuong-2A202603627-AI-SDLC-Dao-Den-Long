@@ -53,9 +53,10 @@ Có --scenario path.json, --inputs path.json, --snapshot-every N. Schema nguồn
 - Các giá trị tuning đúng như game.contract.json và core.ts; test đối chiếu hai bản.
 - Thứ tự mỗi bước: giảm timer cooldown/invuln → di chuyển/nhảy → nhặt → nạp → pulse → shade di chuyển/hit → giảm thời gian và xét kết thúc.
 - Nạp từng phần: tối đa phần đèn còn thiếu; phần dư ở túi. Chọn đèn chưa sáng gần nhất trong tầm, hòa khoảng cách chọn ID. Giữ E không nạp lặp: cần nhả/nhấn lại.
-- Pulse tác động cả shade đang stun, làm mới stun, đẩy 4m và cộng điểm mỗi shade trúng; giữ Q chỉ kích hoạt một lần. Timer stun giảm ngay trong bước pulse.
+- Q tạo vùng sáng bán kính 7m đi theo Mây trong 2 giây (120 tick). Shade trúng lúc kích hoạt bị stun 2 giây, nhận lực đẩy dần 4m, không teleport; vùng sáng buộc shade rút lui và chặn bước đi từ ngoài vào. Giữ Q không gia hạn; lần nhả/nhấn mới sau cooldown 1s tốn thêm 3 đom đóm và đặt lại hạn. Chỉ cộng điểm cho shade trúng tại lần kích hoạt.
+- Shade dùng lực tách mềm ở khoảng cách 1.7m để không chồng thành một khối; tốc độ rút lui tối đa 4.8m/s. Không xóa/ẩn shade khi gặp sáng. [Quyết định và hướng dẫn kiểm tra](../docs/DECISION-SHADES-LIGHT.md).
 - Hit giảm 1 flame, invuln 2 giây; mất floor(carried × 0.25) đom đóm. Đom đóm rơi bị loại khỏi túi, không tạo lại dưới đất. Mỗi bước tối đa một hit do invuln.
-- Shade bị chiếu ra ngoài bán kính an toàn nếu vị trí di chuyển dự kiến ở trong vùng đèn sáng. Chưa dùng physics mesh để collision.
+- Đèn đã sáng giữ vùng an toàn 6m lâu dài. Shade bên trong rút ra liên tục; shade ngoài không bước vào. Mây trong vùng đèn/Q không nhận hit trong khi shade đang rút lui. Chưa dùng physics mesh để collision.
 - Ưu tiên kết thúc cùng tick: all_lit/won → no_flames/lost → dawn/lost. Khi scenario đã đủ điều kiện kết thúc tại tick 0, giữ snapshot ban đầu playing, xét kết thúc ở bước đầu; ticks=0 không thực hiện bước đó. Đây là giả định cần đối chiếu nếu trợ giảng làm rõ khác.
 - Dựng scenario không cộng điểm/event. Time override là thời lượng còn lại ban đầu và sau k bước giảm k/60.
 - Restart dùng lại seed 12 như bản web đầu, reset toàn bộ game và input; góc camera được giữ.

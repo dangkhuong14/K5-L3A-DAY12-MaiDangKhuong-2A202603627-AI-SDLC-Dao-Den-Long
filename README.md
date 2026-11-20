@@ -1,5 +1,33 @@
 # Day 12 — AI SDLC: Đảo Đèn Lồng
 
+## Bản game Phase 1 trong repo này
+
+Game tự dựng bằng Three.js; điểm vào là [game/index.html](game/index.html), không phải HTML tải về ở gốc. Hướng dẫn điều khiển, điểm số và giả định: [game/README.md](game/README.md).
+
+Cài và chơi từ gốc repo (Node.js 22.12+ hoặc 24):
+
+```sh
+npm ci
+npm run dev
+```
+
+Mở địa chỉ Vite in ra. WASD/mũi tên di chuyển, Space nhảy, E nạp đèn, Q tỏa sáng, kéo chuột xoay camera.
+
+- Test: `npm test`; build: `npm run build`.
+- Headless: `npm run --silent headless -- --seed 42 --night 1 --ticks 600 --out output.jsonl`.
+- Tạo bằng chứng: `npm run evidence` → thư mục mới trong docs/proof/phase-1/. Script mới thêm, chưa chạy xác minh tại thời điểm cập nhật này; không coi việc có script là bằng chứng PASS.
+- [Hướng dẫn tạo bằng chứng và nộp Phase 1](docs/NOP-PHASE-1.md).
+- [Bản ghi kiểm chứng trước đó](docs/verification/phase-1.md). Lần chạy thành công gần nhất sau sửa A/D: 14/14 test và build đạt trên Windows; chưa có nghiệm thu đầy đủ trên Linux/macOS hoặc clip chơi trọn màn.
+- Video bàn giao cuối: chưa có, bổ sung link khi quay thật ở Phase 4.
+
+### Sáng tạo của tôi
+
+Model low-poly bằng hình khối tự tạo, nón lá treo đèn, biển mây, sao và vòng sáng pulse chỉ ở lớp hiển thị. Mô tả ở [game/README.md](game/README.md#sáng-tạo-của-tôi); chưa có ảnh/clip đính kèm để nghiệm thu sáng tạo.
+
+---
+
+## Hướng dẫn gốc của lab
+
 > **Cá nhân** (1 người / 1 MSSV) · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.
 > **Lab board + trợ giảng:** **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**
 
